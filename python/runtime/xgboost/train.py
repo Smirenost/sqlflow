@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import sys
 
@@ -18,9 +17,11 @@ import runtime.pai.pai_distributed as pai_dist
 import six
 import xgboost as xgb
 from runtime import oss as pai_model_store
-from runtime.model_metadata import collect_model_metadata, save_model_metadata
+from runtime.model_metadata import collect_model_metadata
+from runtime.model_metadata import save_model_metadata
 from runtime.xgboost.dataset import xgb_dataset
-from runtime.xgboost.pai_rabit import PaiXGBoostTracker, PaiXGBoostWorker
+from runtime.xgboost.pai_rabit import PaiXGBoostTracker
+from runtime.xgboost.pai_rabit import PaiXGBoostWorker
 
 
 def dist_train(

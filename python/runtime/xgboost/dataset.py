@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import os
 import shutil
@@ -22,7 +21,8 @@ import six
 import xgboost as xgb
 from runtime import db
 from scipy.sparse import vstack
-from sklearn.datasets import load_svmlight_file, load_svmlight_files
+from sklearn.datasets import load_svmlight_file
+from sklearn.datasets import load_svmlight_files
 
 
 def xgb_dataset(

@@ -10,10 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import sys
 
-from runtime.db import buffered_db_writer, connect_with_data_source
+from runtime.db import buffered_db_writer
+from runtime.db import connect_with_data_source
 from runtime.import_model import import_model
 from runtime.tensorflow import metrics
 from runtime.tensorflow.get_tf_model_type import is_tf_estimator

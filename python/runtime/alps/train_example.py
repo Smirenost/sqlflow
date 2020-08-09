@@ -10,22 +10,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # NOTE: ALPS supports tensorflow 1.15 currently, should run this example with
 # TensorFlow 1.15.x installed.
-
 import os
 import shutil
 
 import tensorflow as tf
-# pylint: disable=E0401
-# need to import GroupedSparseColumn, SparseColumn when it's used
 from alps.framework.column.column import DenseColumn
 from alps.framework.experiment import EstimatorBuilder
 from alps.io.base import OdpsConf
-# pylint: enable=E0401
 from runtime.alps.train import train
 from runtime.tensorflow.get_tf_version import tf_is_version2
+# pylint: disable=E0401
+# need to import GroupedSparseColumn, SparseColumn when it's used
+# pylint: enable=E0401
 
 
 class SQLFlowEstimatorBuilder(EstimatorBuilder):

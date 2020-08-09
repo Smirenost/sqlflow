@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 import sys
 import time
@@ -19,10 +18,12 @@ import uuid
 import oss2
 import requests
 import six
-from runtime.optimize.model_generation import (
-    assert_are_valid_tokens, find_matched_aggregation_function_brackets,
-    generate_objective_and_constraint_expr, try_convert_comparision_token,
-    try_convert_to_aggregation_function, update_by_column_names)
+from runtime.optimize.model_generation import assert_are_valid_tokens
+from runtime.optimize.model_generation import find_matched_aggregation_function_brackets
+from runtime.optimize.model_generation import generate_objective_and_constraint_expr
+from runtime.optimize.model_generation import try_convert_comparision_token
+from runtime.optimize.model_generation import try_convert_to_aggregation_function
+from runtime.optimize.model_generation import update_by_column_names
 from runtime.oss import get_bucket
 
 __all__ = [

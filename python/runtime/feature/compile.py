@@ -10,13 +10,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import numpy as np
 import six
-from runtime.feature.column import (BucketColumn, CategoryHashColumn,
-                                    CategoryIDColumn, CrossColumn,
-                                    EmbeddingColumn, IndicatorColumn,
-                                    NumericColumn, SeqCategoryIDColumn)
+from runtime.feature.column import BucketColumn
+from runtime.feature.column import CategoryHashColumn
+from runtime.feature.column import CategoryIDColumn
+from runtime.feature.column import CrossColumn
+from runtime.feature.column import EmbeddingColumn
+from runtime.feature.column import IndicatorColumn
+from runtime.feature.column import NumericColumn
+from runtime.feature.column import SeqCategoryIDColumn
 from runtime.feature.field_desc import DataType
 from runtime.model import EstimatorType
 

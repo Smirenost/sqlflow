@@ -20,7 +20,8 @@ import subprocess
 import tempfile
 from os import path
 
-from runtime import db, oss
+from runtime import db
+from runtime import oss
 from runtime.diagnostics import SQLFlowDiagnostic
 from runtime.model import EstimatorType
 from runtime.pai import cluster_conf

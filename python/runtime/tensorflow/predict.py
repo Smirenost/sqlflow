@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import functools
 import os
 
@@ -20,9 +19,9 @@ from runtime import db
 from runtime.import_model import import_model
 from runtime.tensorflow.get_tf_model_type import is_tf_estimator
 from runtime.tensorflow.get_tf_version import tf_is_version2
-from runtime.tensorflow.input_fn import (get_dtype,
-                                         parse_sparse_feature_predict,
-                                         tf_generator)
+from runtime.tensorflow.input_fn import get_dtype
+from runtime.tensorflow.input_fn import parse_sparse_feature_predict
+from runtime.tensorflow.input_fn import tf_generator
 from runtime.tensorflow.keras_with_feature_column_input import \
     init_model_with_feature_column
 

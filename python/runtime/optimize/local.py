@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import threading
 
 import numpy as np
@@ -19,8 +18,8 @@ import pyomo.environ as pyomo_env
 import runtime.db as db
 import runtime.verifier as verifier
 import six
-from runtime.optimize.model_generation import (
-    generate_objective_and_constraint_expr, generate_unique_result_value_name)
+from runtime.optimize.model_generation import generate_objective_and_constraint_expr
+from runtime.optimize.model_generation import generate_unique_result_value_name
 
 # FIXME(sneaxiy): do not know why Pyomo requires that the data frame must be
 # a global variable

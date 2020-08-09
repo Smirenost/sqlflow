@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 import unittest
 from unittest import TestCase
@@ -18,11 +17,20 @@ from unittest import TestCase
 import numpy as np
 import runtime.testing as testing
 from odps import tunnel
-from runtime.db import (MYSQL_FIELD_TYPE_DICT, buffered_db_writer, connect,
-                        connect_with_data_source, db_generator,
-                        get_table_schema, limit_select, parseHiveDSN,
-                        parseMaxComputeDSN, parseMySQLDSN, query, read_feature,
-                        read_features_from_row, selected_columns_and_types)
+from runtime.db import buffered_db_writer
+from runtime.db import connect
+from runtime.db import connect_with_data_source
+from runtime.db import db_generator
+from runtime.db import get_table_schema
+from runtime.db import limit_select
+from runtime.db import MYSQL_FIELD_TYPE_DICT
+from runtime.db import parseHiveDSN
+from runtime.db import parseMaxComputeDSN
+from runtime.db import parseMySQLDSN
+from runtime.db import query
+from runtime.db import read_feature
+from runtime.db import read_features_from_row
+from runtime.db import selected_columns_and_types
 
 
 def _execute_maxcompute(conn, statement):
