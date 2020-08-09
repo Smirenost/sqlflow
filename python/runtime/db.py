@@ -497,7 +497,7 @@ def get_table_schema(conn, table):
     if conn.driver == "maxcompute":
         schema = conn.get_table(table).schema
         return [(c.name, str(c.type).upper())
-                           for c in schema.columns]
+                for c in schema.columns]
     else:
         statement = "describe %s" % table
         cursor = conn.cursor()

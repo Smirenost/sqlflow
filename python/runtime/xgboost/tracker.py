@@ -44,6 +44,7 @@ class ExSocket(object):
     """
     Extension of socket to handle recv and send of special data
     """
+
     def __init__(self, sock):
         self.sock = sock
 
@@ -168,6 +169,7 @@ class RabitTracker(object):
     """
     tracker for rabit
     """
+
     def __init__(self, hostIP, nslave, port=9091, port_end=9999):
         sock = socket.socket(get_family(hostIP), socket.SOCK_STREAM)
         for port in range(port, port_end):
@@ -371,6 +373,7 @@ class PSTracker(object):
     """
     Tracker module for PS
     """
+
     def __init__(self, hostIP, cmd, port=9091, port_end=9999, envs=None):
         """
         Starts the PS scheduler
@@ -398,7 +401,7 @@ class PSTracker(object):
             env[k] = str(v)
         self.thread = Thread(target=(lambda: subprocess.check_call(
             self.cmd, env=env, shell=True, executable='/bin/bash')),
-                             args=())
+            args=())
         self.thread.setDaemon(True)
         self.thread.start()
 

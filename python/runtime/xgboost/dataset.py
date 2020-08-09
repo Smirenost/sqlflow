@@ -56,18 +56,18 @@ def xgb_dataset(datasource,
 
     if is_pai:
         yield from pai_dataset(
-                fn,
-                feature_metas,
-                feature_column_names,
-                label_meta,
-                "odps://{}/tables/{}".format(*pai_table.split(".")),
-                pai_single_file,
-                cache,
-                rank,
-                nworkers,
-                batch_size=batch_size,
-                feature_column_code=feature_column_code,
-                raw_data_dir=raw_data_dir)
+            fn,
+            feature_metas,
+            feature_column_names,
+            label_meta,
+            "odps://{}/tables/{}".format(*pai_table.split(".")),
+            pai_single_file,
+            cache,
+            rank,
+            nworkers,
+            batch_size=batch_size,
+            feature_column_code=feature_column_code,
+            raw_data_dir=raw_data_dir)
         return
 
     conn = db.connect_with_data_source(datasource)

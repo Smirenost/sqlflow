@@ -175,7 +175,7 @@ class CategoricalColumnWithVocabularyList(CategoricalColumnTransformer):
         return len(self.vocabulary_list)
 
     def __call__(self, inputs):
-        fn = lambda x: self.vocabulary_list.index(x)  # noqa: E731
+        def fn(x): return self.vocabulary_list.index(x)  # noqa: E731
 
         def transform_fn(slot_value):
             if isinstance(slot_value, np.ndarray):
@@ -209,7 +209,7 @@ class CategoricalColumnWithHashBucketTransformer(CategoricalColumnTransformer):
         return self.hash_bucket_size
 
     def __call__(self, inputs):
-        fn = lambda x: hashing(x) % self.hash_bucket_size  # noqa: E731
+        def fn(x): return hashing(x) % self.hash_bucket_size  # noqa: E731
 
         def transform_fn(slot_value):
             if isinstance(slot_value, np.ndarray):

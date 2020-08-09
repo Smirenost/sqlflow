@@ -292,7 +292,6 @@ def generate_optflow_fsl_token_when_two_vars(token, columns, result_value_name,
 
             return '@input["%s"][%s]' % (token, non_aggregation_index)
 
-
     return token
 
 

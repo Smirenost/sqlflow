@@ -21,6 +21,7 @@ import six
 class ResultSet(object):
     """Base class for DB query result, caller can iteratable this object
     to get all result rows"""
+
     def __init__(self):
         self._generator = None
 
@@ -90,6 +91,7 @@ class Connection(object):
             format.
 
     """
+
     def __init__(self, conn_uri):
         self.uristr = conn_uri
         self.uripts = self._parse_uri()

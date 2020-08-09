@@ -144,7 +144,7 @@ def drop_pai_model(datasource, model_name):
         "odpscmd", "-u", user, "-p", passwd, "--project", database,
         "--endpoint", address, "-e", cmd
     ],
-                   check=True)
+        check=True)
 
 
 def create_pai_hyper_param_file(cwd, filename, model_path):

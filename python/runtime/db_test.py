@@ -125,12 +125,12 @@ class TestDB(TestCase):
         execute(driver, conn, drop_tbl)
         execute(driver, conn, create_tbl)
         with buffered_db_writer(driver,
-                                    conn,
-                                    "test_db.tbl",
-                                    table_schema,
-                                    buff_size=10,
-                                    hdfs_namenode_addr=hdfs_namenode_addr,
-                                    hive_location=hive_location) as w:
+                                conn,
+                                "test_db.tbl",
+                                table_schema,
+                                buff_size=10,
+                                hdfs_namenode_addr=hdfs_namenode_addr,
+                                hive_location=hive_location) as w:
             values = [(1, '5,6,1,2')] * 10
             for row in values:
                 w.write(row)
@@ -154,12 +154,12 @@ class TestDB(TestCase):
         else:
             execute(driver, conn, self.create_statement)
         with buffered_db_writer(driver,
-                                    conn,
-                                    table_name,
-                                    table_schema,
-                                    buff_size=10,
-                                    hdfs_namenode_addr=hdfs_namenode_addr,
-                                    hive_location=hive_location) as w:
+                                conn,
+                                table_name,
+                                table_schema,
+                                buff_size=10,
+                                hdfs_namenode_addr=hdfs_namenode_addr,
+                                hive_location=hive_location) as w:
             values = [(1, '5,6,1,2')] * 10
 
             for row in values:

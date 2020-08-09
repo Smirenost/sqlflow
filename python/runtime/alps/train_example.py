@@ -31,7 +31,7 @@ from runtime.tensorflow.get_tf_version import tf_is_version2
 class SQLFlowEstimatorBuilder(EstimatorBuilder):
     def _build(self, experiment, run_config):
         feature_columns = [tf.feature_column.numeric_column(col_name) for col_name in [
-                "sepal_length", "sepal_width", "petal_length", "petal_width"
+            "sepal_length", "sepal_width", "petal_length", "petal_width"
         ]]
 
         return tf.estimator.DNNClassifier(  # pylint: disable=no-member

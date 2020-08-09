@@ -553,8 +553,10 @@ def artifact(path):
 def _predicate(pre, post, condition):
     """Generates an Argo predicate.
     """
-    dict_config = {"pre": pre() if isinstance(pre, types.FunctionType) else pre}
-    dict_config["post"] = post() if isinstance(post, types.FunctionType) else post
+    dict_config = {"pre": pre() if isinstance(
+        pre, types.FunctionType) else pre}
+    dict_config["post"] = post() if isinstance(
+        post, types.FunctionType) else post
     # TODO: check the condition
     dict_config["condition"] = condition
 
@@ -753,7 +755,6 @@ class Secret:
             "type": "Opaque",
             "data": {},
         }
-
 
         for key, value in self.data.items():
             encode_val = pyfunc.encode_base64(value)
