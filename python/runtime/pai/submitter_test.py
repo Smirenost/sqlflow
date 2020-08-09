@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 import unittest
 from unittest import TestCase
@@ -27,10 +26,10 @@ class SubmitterTestCase(TestCase):
         self.assertEqual("oss://sqlflow-models/user_a/model", url)
 
     def test_get_datasource_dsn(self):
-        ds = "odps://access_id:access_key@service.com/api?" \
-             "curr_project=test_ci&scheme=http"
-        expected_dsn = "access_id:access_key@service.com/api?" \
-                       "curr_project=test_ci&scheme=http"
+        ds = ("odps://access_id:access_key@service.com/api?"
+              "curr_project=test_ci&scheme=http")
+        expected_dsn = ("access_id:access_key@service.com/api?"
+                        "curr_project=test_ci&scheme=http")
         dsn = submitter.get_datasource_dsn(ds)
         self.assertEqual(expected_dsn, dsn)
         project = "test_ci"
@@ -41,9 +40,17 @@ class SubmitterTestCase(TestCase):
         os.environ[
             "SQLFLOW_OSS_CHECKPOINT_CONFIG"] = '{"arn":"arn", "host":"host"}'
         cmd = submitter.get_pai_tf_cmd(
-            conf, "job.tar.gz", "params.txt", "entry.py", "my_dnn_model",
-            "user1/my_dnn_model", "test_project.input_table",
-            "test_project.val_table", "test_project.res_table", "test_project")
+            conf,
+            "job.tar.gz",
+            "params.txt",
+            "entry.py",
+            "my_dnn_model",
+            "user1/my_dnn_model",
+            "test_project.input_table",
+            "test_project.val_table",
+            "test_project.res_table",
+            "test_project",
+        )
         expected = (
             "pai -name tensorflow1150 -project algo_public_dev "
             "-DmaxHungTimeBeforeGCInSeconds=0 "
@@ -60,9 +67,17 @@ class SubmitterTestCase(TestCase):
 
         conf = get_cluster_config({"train.num_workers": 5})
         cmd = submitter.get_pai_tf_cmd(
-            conf, "job.tar.gz", "params.txt", "entry.py", "my_dnn_model",
-            "user1/my_dnn_model", "test_project.input_table",
-            "test_project.val_table", "test_project.res_table", "test_project")
+            conf,
+            "job.tar.gz",
+            "params.txt",
+            "entry.py",
+            "my_dnn_model",
+            "user1/my_dnn_model",
+            "test_project.input_table",
+            "test_project.val_table",
+            "test_project.res_table",
+            "test_project",
+        )
         expected = (
             "pai -name tensorflow1150 -project algo_public_dev "
             "-DmaxHungTimeBeforeGCInSeconds=0 "
@@ -74,7 +89,7 @@ class SubmitterTestCase(TestCase):
             "-DhyperParameters='params.txt' "
             "-DcheckpointDir='oss://sqlflow-models/user1/my_dnn_model/?"
             "role_arn=arn/pai2osstestproject&host=host' "
-            r'''-Dcluster="{\"ps\": {\"count\": 1, \"cpu\": 200, \"gpu\": 0}'''
+            r"""-Dcluster="{\"ps\": {\"count\": 1, \"cpu\": 200, \"gpu\": 0}"""
             r''', \"worker\": {\"count\": 5, \"cpu\": 400, \"gpu\": 0}}"''')
         self.assertEqual(expected, cmd)
         del os.environ["SQLFLOW_OSS_CHECKPOINT_CONFIG"]
@@ -102,7 +117,7 @@ iris_feature_metas["sepal_length"] = {
     "delimiter": "",
     "format": "",
     "shape": [1],
-    "is_sparse": "false" == "true"
+    "is_sparse": "false" == "true",
 }
 iris_feature_metas["sepal_width"] = {
     "feature_name": "sepal_width",
@@ -110,7 +125,7 @@ iris_feature_metas["sepal_width"] = {
     "delimiter": "",
     "format": "",
     "shape": [1],
-    "is_sparse": "false" == "true"
+    "is_sparse": "false" == "true",
 }
 iris_feature_metas["petal_length"] = {
     "feature_name": "petal_length",
@@ -118,7 +133,7 @@ iris_feature_metas["petal_length"] = {
     "delimiter": "",
     "format": "",
     "shape": [1],
-    "is_sparse": "false" == "true"
+    "is_sparse": "false" == "true",
 }
 iris_feature_metas["petal_width"] = {
     "feature_name": "petal_width",
@@ -126,7 +141,7 @@ iris_feature_metas["petal_width"] = {
     "delimiter": "",
     "format": "",
     "shape": [1],
-    "is_sparse": "false" == "true"
+    "is_sparse": "false" == "true",
 }
 
 iris_label_meta = {
@@ -134,13 +149,14 @@ iris_label_meta = {
     "dtype": "int64",
     "delimiter": "",
     "shape": [],
-    "is_sparse": "false" == "true"
+    "is_sparse": "false" == "true",
 }
 
 
-@unittest.skipUnless(testing.get_driver() == "maxcompute"
-                     and testing.get_submitter() == "pai",
-                     "skip non PAI tests")
+@unittest.skipUnless(
+    testing.get_driver() == "maxcompute" and testing.get_submitter() == "pai",
+    "skip non PAI tests",
+)
 class SubmitPAITrainTask(TestCase):
     def test_submit_pai_train_task(self):
         model_params = {"hidden_units": [10, 20], "n_classes": 3}
@@ -182,32 +198,39 @@ class SubmitPAITrainTask(TestCase):
             is_pai=True,
             feature_columns_code=feature_columns_code,
             model_repo_image="",
-            original_sql='''
+            original_sql="""
 SELECT * FROM alifin_jtest_dev.sqlflow_test_iris_train
 TO TRAIN DNNClassifier
 WITH model.n_classes = 3, model.hidden_units = [10, 20]
 LABEL class
-INTO e2etest_pai_dnn;''')
+INTO e2etest_pai_dnn;""",
+        )
 
     def test_submit_pai_predict_task(self):
         submitter.submit_pai_predict(
             testing.get_datasource(),
             """SELECT * FROM alifin_jtest_dev.sqlflow_iris_test""",
-            "alifin_jtest_dev.pai_dnn_predict", "class", "e2etest_pai_dnn", {})
+            "alifin_jtest_dev.pai_dnn_predict",
+            "class",
+            "e2etest_pai_dnn",
+            {},
+        )
 
     def test_submit_pai_explain_task(self):
         submitter.submit_pai_explain(
             testing.get_datasource(),
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_test",
-            "alifin_jtest_dev.pai_dnn_explain_result", "e2etest_pai_dnn",
-            {"label_col": "class"})
+            "alifin_jtest_dev.pai_dnn_explain_result",
+            "e2etest_pai_dnn",
+            {"label_col": "class"},
+        )
 
     def test_submit_xgb_train_task(self):
         model_params = {
             "booster": "gbtree",
             "eta": 0.4,
             "num_class": 3,
-            "objective": "multi:softprob"
+            "objective": "multi:softprob",
         }
         train_params = {"num_boost_round": 10}
         feature_columns_code = """
@@ -233,75 +256,95 @@ INTO e2etest_pai_dnn;''')
             feature_metas=iris_feature_metas,
             label_meta=iris_label_meta,
             feature_column_names=iris_feature_column_names,
-            feature_columns_code=feature_columns_code)
+            feature_columns_code=feature_columns_code,
+        )
 
     def test_submit_pai_xgb_predict_task(self):
         submitter.submit_pai_predict(
             testing.get_datasource(),
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_test",
-            "alifin_jtest_dev.pai_xgb_predict", "class",
-            "e2etest_xgb_classify_model", {})
+            "alifin_jtest_dev.pai_xgb_predict",
+            "class",
+            "e2etest_xgb_classify_model",
+            {},
+        )
 
     def test_submit_pai_xgb_explain_task(self):
         submitter.submit_pai_explain(
             testing.get_datasource(),
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
             "alifin_jtest_dev.e2etest_xgb_explain_result",
-            "e2etest_xgb_classify_model", {"label_col": "class"})
+            "e2etest_xgb_classify_model",
+            {"label_col": "class"},
+        )
 
     def test_submit_pai_kmeans_train_task(self):
         submitter.submit_pai_train(
             testing.get_datasource(),
             "KMeans",
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
-            "", {
+            "",
+            {
                 "excluded_columns": "class",
-                "idx_table_name": "alifin_jtest_dev.e2e_test_kmeans_output_idx"
+                "idx_table_name":
+                "alifin_jtest_dev.e2e_test_kmeans_output_idx",
             },
             "e2e_test_kmeans",
             "",
-            feature_column_names=[*iris_feature_column_names, "class"])
+            feature_column_names=[*iris_feature_column_names, "class"],
+        )
 
     def test_submit_pai_random_forest_train_task(self):
         submitter.submit_pai_train(
             testing.get_datasource(),
             "RandomForests",
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
-            "", {
+            "",
+            {
                 "tree_num": 3,
             },
             "e2e_test_random_forest",
             "",
             feature_column_names=iris_feature_column_names,
-            label_meta=iris_label_meta)
+            label_meta=iris_label_meta,
+        )
 
     def test_submit_pai_random_forest_predict_task(self):
         submitter.submit_pai_predict(
             testing.get_datasource(),
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_test",
-            "alifin_jtest_dev.pai_rf_predict", "class",
-            "e2e_test_random_forest", {})
+            "alifin_jtest_dev.pai_rf_predict",
+            "class",
+            "e2e_test_random_forest",
+            {},
+        )
 
     def test_submit_pai_random_forest_explain_task(self):
         submitter.submit_pai_explain(
             testing.get_datasource(),
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
             "alifin_jtest_dev.e2etest_random_forest_explain_result",
-            "e2e_test_random_forest", {"label_col": "class"})
+            "e2e_test_random_forest",
+            {"label_col": "class"},
+        )
 
     def test_submit_pai_tf_evaluate_task(self):
         submitter.submit_pai_evaluate(
-            testing.get_datasource(), "e2etest_pai_dnn",
+            testing.get_datasource(),
+            "e2etest_pai_dnn",
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
             "alifin_jtest_dev.e2etest_pai_dnn_evaluate_result",
-            {"validation.metrics": "Accuracy,Recall"})
+            {"validation.metrics": "Accuracy,Recall"},
+        )
 
     def test_submit_pai_xgb_evaluate_task(self):
         submitter.submit_pai_evaluate(
-            testing.get_datasource(), "e2etest_xgb_classify_model",
+            testing.get_datasource(),
+            "e2etest_xgb_classify_model",
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
             "alifin_jtest_dev.e2etest_pai_xgb_evaluate_result",
-            {"validation.metrics": "accuracy_score"})
+            {"validation.metrics": "accuracy_score"},
+        )
 
 
 if __name__ == "__main__":

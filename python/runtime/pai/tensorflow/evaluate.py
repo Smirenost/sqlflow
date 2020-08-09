@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License
-
 import sys
 
 import tensorflow as tf
@@ -18,8 +17,9 @@ from runtime import oss
 from runtime.import_model import import_model
 from runtime.pai.pai_distributed import define_tf_flags
 from runtime.tensorflow import is_tf_estimator
-from runtime.tensorflow.evaluate import (estimator_evaluate, keras_evaluate,
-                                         write_result_metrics)
+from runtime.tensorflow.evaluate import estimator_evaluate
+from runtime.tensorflow.evaluate import keras_evaluate
+from runtime.tensorflow.evaluate import write_result_metrics
 from runtime.tensorflow.input_fn import get_dataset_fn
 from runtime.tensorflow.keras_with_feature_column_input import \
     init_model_with_feature_column
@@ -47,10 +47,15 @@ def evaluate(datasource, select, data_table, result_table, oss_model_path,
         metrics: metrics to evaluate
     """
 
-    (estimator, feature_column_names, feature_column_names_map, feature_metas,
-     label_meta, model_params,
-     feature_columns_code) = oss.load_metas(oss_model_path,
-                                            "tensorflow_model_desc")
+    (
+        estimator,
+        feature_column_names,
+        feature_column_names_map,
+        feature_metas,
+        label_meta,
+        model_params,
+        feature_columns_code,
+    ) = oss.load_metas(oss_model_path, "tensorflow_model_desc")
 
     feature_columns = eval(feature_columns_code)
     # NOTE(typhoonzero): No need to eval model_params["optimizer"] and
@@ -69,50 +74,56 @@ def evaluate(datasource, select, data_table, result_table, oss_model_path,
     else:
         oss.load_file(oss_model_path, "model_save")
 
-    _evaluate(datasource=datasource,
-              estimator_string=estimator,
-              select=select,
-              result_table=result_table,
-              feature_columns=feature_columns,
-              feature_column_names=feature_column_names,
-              feature_metas=feature_metas,
-              label_meta=label_meta,
-              model_params=model_params,
-              validation_metrics=metrics,
-              save="model_save",
-              batch_size=1,
-              validation_steps=None,
-              verbose=0,
-              is_pai=True,
-              pai_table=data_table)
+    _evaluate(
+        datasource=datasource,
+        estimator_string=estimator,
+        select=select,
+        result_table=result_table,
+        feature_columns=feature_columns,
+        feature_column_names=feature_column_names,
+        feature_metas=feature_metas,
+        label_meta=label_meta,
+        model_params=model_params,
+        validation_metrics=metrics,
+        save="model_save",
+        batch_size=1,
+        validation_steps=None,
+        verbose=0,
+        is_pai=True,
+        pai_table=data_table,
+    )
 
 
-def _evaluate(datasource,
-              estimator_string,
-              select,
-              result_table,
-              feature_columns,
-              feature_column_names,
-              feature_metas={},
-              label_meta={},
-              model_params={},
-              validation_metrics=["Accuracy"],
-              save="",
-              batch_size=1,
-              validation_steps=None,
-              verbose=0,
-              pai_table=""):
+def _evaluate(
+        datasource,
+        estimator_string,
+        select,
+        result_table,
+        feature_columns,
+        feature_column_names,
+        feature_metas={},
+        label_meta={},
+        model_params={},
+        validation_metrics=["Accuracy"],
+        save="",
+        batch_size=1,
+        validation_steps=None,
+        verbose=0,
+        pai_table="",
+):
     estimator_cls = import_model(estimator_string)
     is_estimator = is_tf_estimator(estimator_cls)
     set_log_level(verbose, is_estimator)
-    eval_dataset = get_dataset_fn(select,
-                                  datasource,
-                                  feature_column_names,
-                                  feature_metas,
-                                  label_meta,
-                                  is_pai=True,
-                                  pai_table=pai_table,
-                                  batch_size=batch_size)
+    eval_dataset = get_dataset_fn(
+        select,
+        datasource,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        is_pai=True,
+        pai_table=pai_table,
+        batch_size=batch_size,
+    )
 
     model_params.update(feature_columns)
     if is_estimator:
@@ -129,12 +140,14 @@ def _evaluate(datasource,
 
     if result_table:
         metric_name_list = ["loss"] + validation_metrics
-        write_result_metrics(result_metrics,
-                             metric_name_list,
-                             result_table,
-                             "pai_maxcompute",
-                             None,
-                             hdfs_namenode_addr="",
-                             hive_location="",
-                             hdfs_user="",
-                             hdfs_pass="")
+        write_result_metrics(
+            result_metrics,
+            metric_name_list,
+            result_table,
+            "pai_maxcompute",
+            None,
+            hdfs_namenode_addr="",
+            hive_location="",
+            hdfs_user="",
+            hdfs_pass="",
+        )

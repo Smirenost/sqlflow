@@ -10,47 +10,51 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import numpy as np
 import pandas as pd
 import scipy
 import shap
 import six
 import xgboost as xgb
-from runtime import db, explainer
+from runtime import db
+from runtime import explainer
 
 
 def infer_dtype(feature):
     if isinstance(feature, np.ndarray):
         if feature.dtype in [np.float32, np.float64]:
-            return 'float32'
+            return "float32"
         elif feature.dtype in [np.int32, np.int64]:
-            return 'int64'
+            return "int64"
         else:
-            raise ValueError('Not supported data type {}'.format(
+            raise ValueError("Not supported data type {}".format(
                 feature.dtype))
     elif isinstance(feature, (np.float32, np.float64, float)):
-        return 'float32'
+        return "float32"
     elif isinstance(feature, (np.int32, np.int64, six.integer_types)):
-        return 'int64'
+        return "int64"
     else:
-        raise ValueError('Not supported data type {}'.format(type(feature)))
+        raise ValueError("Not supported data type {}".format(type(feature)))
 
 
-def xgb_shap_dataset(datasource,
-                     select,
-                     feature_column_names,
-                     label_meta,
-                     feature_metas,
-                     is_pai,
-                     pai_explain_table,
-                     transform_fn=None,
-                     feature_column_code=""):
+def xgb_shap_dataset(
+        datasource,
+        select,
+        feature_column_names,
+        label_meta,
+        feature_metas,
+        is_pai,
+        pai_explain_table,
+        transform_fn=None,
+        feature_column_code="",
+):
     label_column_name = label_meta["feature_name"]
     if is_pai:
         pai_table_parts = pai_explain_table.split(".")
-        formatted_pai_table = "odps://%s/tables/%s" % (pai_table_parts[0],
-                                                       pai_table_parts[1])
+        formatted_pai_table = "odps://%s/tables/%s" % (
+            pai_table_parts[0],
+            pai_table_parts[1],
+        )
         stream = db.pai_maxcompute_db_generator(formatted_pai_table,
                                                 label_column_name)
         selected_cols = db.pai_selected_cols(formatted_pai_table)
@@ -118,7 +122,7 @@ def xgb_shap_dataset(datasource,
                     column_names.append(feature_names[j])
                 else:
                     for k in six.moves.range(start, end):
-                        column_names.append('{}-{}'.format(
+                        column_names.append("{}-{}".format(
                             feature_names[j], k))
 
             xs = pd.DataFrame(columns=column_names)
@@ -146,39 +150,46 @@ def xgb_shap_values(x):
     bst = xgb.Booster()
     bst.load_model("my_model")
     explainer = shap.TreeExplainer(bst)
-    return explainer.shap_values(x), explainer.shap_interaction_values(
-        x), explainer.expected_value
+    return (
+        explainer.shap_values(x),
+        explainer.shap_interaction_values(x),
+        explainer.expected_value,
+    )
 
 
-def explain(datasource,
-            select,
-            feature_field_meta,
-            feature_column_names,
-            label_meta,
-            summary_params,
-            result_table="",
-            is_pai=False,
-            pai_explain_table="",
-            hdfs_namenode_addr="",
-            hive_location="",
-            hdfs_user="",
-            hdfs_pass="",
-            oss_dest=None,
-            oss_ak=None,
-            oss_sk=None,
-            oss_endpoint=None,
-            oss_bucket_name=None,
-            transform_fn=None,
-            feature_column_code=""):
-    x = xgb_shap_dataset(datasource,
-                         select,
-                         feature_column_names,
-                         label_meta,
-                         feature_field_meta,
-                         is_pai,
-                         pai_explain_table,
-                         transform_fn=transform_fn,
-                         feature_column_code=feature_column_code)
+def explain(
+        datasource,
+        select,
+        feature_field_meta,
+        feature_column_names,
+        label_meta,
+        summary_params,
+        result_table="",
+        is_pai=False,
+        pai_explain_table="",
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+        oss_dest=None,
+        oss_ak=None,
+        oss_sk=None,
+        oss_endpoint=None,
+        oss_bucket_name=None,
+        transform_fn=None,
+        feature_column_code="",
+):
+    x = xgb_shap_dataset(
+        datasource,
+        select,
+        feature_column_names,
+        label_meta,
+        feature_field_meta,
+        is_pai,
+        pai_explain_table,
+        transform_fn=transform_fn,
+        feature_column_code=feature_column_code,
+    )
 
     shap_values, shap_interaction_values, expected_value = xgb_shap_values(x)
 
@@ -188,39 +199,81 @@ def explain(datasource,
             # (3, num_samples, num_features), use the first
             # dimension here, should find out how to use
             # the other two.
-            write_shap_values(shap_values[0], "pai_maxcompute", None,
-                              result_table, feature_column_names,
-                              hdfs_namenode_addr, hive_location, hdfs_user,
-                              hdfs_pass)
+            write_shap_values(
+                shap_values[0],
+                "pai_maxcompute",
+                None,
+                result_table,
+                feature_column_names,
+                hdfs_namenode_addr,
+                hive_location,
+                hdfs_user,
+                hdfs_pass,
+            )
         else:
             conn = db.connect_with_data_source(datasource)
-            write_shap_values(shap_values[0], conn.driver, conn, result_table,
-                              feature_column_names, hdfs_namenode_addr,
-                              hive_location, hdfs_user, hdfs_pass)
+            write_shap_values(
+                shap_values[0],
+                conn.driver,
+                conn,
+                result_table,
+                feature_column_names,
+                hdfs_namenode_addr,
+                hive_location,
+                hdfs_user,
+                hdfs_pass,
+            )
         return
 
     if summary_params.get("plot_type") == "decision":
         explainer.plot_and_save(
-            lambda: shap.decision_plot(expected_value,
-                                       shap_interaction_values,
-                                       x,
-                                       show=False,
-                                       feature_display_range=slice(
-                                           None, -40, -1),
-                                       alpha=1), oss_dest, oss_ak, oss_sk,
-            oss_endpoint, oss_bucket_name)
+            lambda: shap.decision_plot(
+                expected_value,
+                shap_interaction_values,
+                x,
+                show=False,
+                feature_display_range=slice(None, -40, -1),
+                alpha=1,
+            ),
+            oss_dest,
+            oss_ak,
+            oss_sk,
+            oss_endpoint,
+            oss_bucket_name,
+        )
     else:
         explainer.plot_and_save(
             lambda: shap.summary_plot(
-                shap_values, x, show=False, **summary_params), oss_dest,
-            oss_ak, oss_sk, oss_endpoint, oss_bucket_name)
+                shap_values, x, show=False, **summary_params),
+            oss_dest,
+            oss_ak,
+            oss_sk,
+            oss_endpoint,
+            oss_bucket_name,
+        )
 
 
-def write_shap_values(shap_values, driver, conn, result_table,
-                      feature_column_names, hdfs_namenode_addr, hive_location,
-                      hdfs_user, hdfs_pass):
-    with db.buffered_db_writer(driver, conn, result_table,
-                               feature_column_names, 100, hdfs_namenode_addr,
-                               hive_location, hdfs_user, hdfs_pass) as w:
+def write_shap_values(
+        shap_values,
+        driver,
+        conn,
+        result_table,
+        feature_column_names,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
+):
+    with db.buffered_db_writer(
+            driver,
+            conn,
+            result_table,
+            feature_column_names,
+            100,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
+    ) as w:
         for row in shap_values:
             w.write(list(row))

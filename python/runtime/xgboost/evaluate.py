@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import numpy as np
 import sklearn.metrics
 import xgboost as xgb
@@ -18,80 +17,106 @@ from runtime import db
 from runtime.xgboost.dataset import xgb_dataset
 
 SKLEARN_METRICS = [
-    'accuracy_score',
-    'average_precision_score',
-    'balanced_accuracy_score',
-    'brier_score_loss',
-    'cohen_kappa_score',
-    'explained_variance_score',
-    'f1_score',
-    'fbeta_score',
-    'hamming_loss',
-    'hinge_loss',
-    'log_loss',
-    'mean_absolute_error',
-    'mean_squared_error',
-    'mean_squared_log_error',
-    'median_absolute_error',
-    'precision_score',
-    'r2_score',
-    'recall_score',
-    'roc_auc_score',
-    'zero_one_loss',
+    "accuracy_score",
+    "average_precision_score",
+    "balanced_accuracy_score",
+    "brier_score_loss",
+    "cohen_kappa_score",
+    "explained_variance_score",
+    "f1_score",
+    "fbeta_score",
+    "hamming_loss",
+    "hinge_loss",
+    "log_loss",
+    "mean_absolute_error",
+    "mean_squared_error",
+    "mean_squared_log_error",
+    "median_absolute_error",
+    "precision_score",
+    "r2_score",
+    "recall_score",
+    "roc_auc_score",
+    "zero_one_loss",
 ]
 
 DEFAULT_PREDICT_BATCH_SIZE = 10000
 
 
-def evaluate(datasource,
-             select,
-             feature_metas,
-             feature_column_names,
-             label_meta,
-             result_table,
-             validation_metrics=["accuracy_score"],
-             is_pai=False,
-             hdfs_namenode_addr="",
-             hive_location="",
-             hdfs_user="",
-             hdfs_pass="",
-             pai_table="",
-             model_params=None,
-             transform_fn=None,
-             feature_column_code=""):
+def evaluate(
+        datasource,
+        select,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        result_table,
+        validation_metrics=["accuracy_score"],
+        is_pai=False,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+        pai_table="",
+        model_params=None,
+        transform_fn=None,
+        feature_column_code="",
+):
     conn = db.connect_with_data_source(datasource) if not is_pai else None
-    dpred = xgb_dataset(datasource,
-                        'predict.txt',
-                        select,
-                        feature_metas,
-                        feature_column_names,
-                        label_meta,
-                        is_pai,
-                        pai_table,
-                        True,
-                        True,
-                        batch_size=DEFAULT_PREDICT_BATCH_SIZE,
-                        transform_fn=transform_fn,
-                        feature_column_code=feature_column_code
-                        )  # NOTE: default to use external memory
-    bst = xgb.Booster({'nthread': 4})  # init model
+    dpred = xgb_dataset(
+        datasource,
+        "predict.txt",
+        select,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        is_pai,
+        pai_table,
+        True,
+        True,
+        batch_size=DEFAULT_PREDICT_BATCH_SIZE,
+        transform_fn=transform_fn,
+        feature_column_code=feature_column_code,
+    )  # NOTE: default to use external memory
+    bst = xgb.Booster({"nthread": 4})  # init model
     bst.load_model("my_model")  # load model
     print("Start evaluating XGBoost model...")
     feature_file_id = 0
     for pred_dmatrix in dpred:
-        evaluate_and_store_result(bst, pred_dmatrix, feature_file_id,
-                                  validation_metrics, model_params,
-                                  feature_column_names, label_meta, is_pai,
-                                  conn, result_table, hdfs_namenode_addr,
-                                  hive_location, hdfs_user, hdfs_pass)
+        evaluate_and_store_result(
+            bst,
+            pred_dmatrix,
+            feature_file_id,
+            validation_metrics,
+            model_params,
+            feature_column_names,
+            label_meta,
+            is_pai,
+            conn,
+            result_table,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
+        )
         feature_file_id += 1
     print("Done evaluating. Result table : %s" % result_table)
 
 
-def evaluate_and_store_result(bst, dpred, feature_file_id, validation_metrics,
-                              model_params, feature_column_names, label_meta,
-                              is_pai, conn, result_table, hdfs_namenode_addr,
-                              hive_location, hdfs_user, hdfs_pass):
+def evaluate_and_store_result(
+        bst,
+        dpred,
+        feature_file_id,
+        validation_metrics,
+        model_params,
+        feature_column_names,
+        label_meta,
+        is_pai,
+        conn,
+        result_table,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
+):
     preds = bst.predict(dpred)
     # FIXME(typhoonzero): copied from predict.py
     if model_params:
@@ -143,15 +168,17 @@ def evaluate_and_store_result(bst, dpred, feature_file_id, validation_metrics,
     else:
         driver = conn.driver
     result_columns = ["loss"] + validation_metrics
-    with db.buffered_db_writer(driver,
-                               conn,
-                               result_table,
-                               result_columns,
-                               100,
-                               hdfs_namenode_addr=hdfs_namenode_addr,
-                               hive_location=hive_location,
-                               hdfs_user=hdfs_user,
-                               hdfs_pass=hdfs_pass) as w:
+    with db.buffered_db_writer(
+            driver,
+            conn,
+            result_table,
+            result_columns,
+            100,
+            hdfs_namenode_addr=hdfs_namenode_addr,
+            hive_location=hive_location,
+            hdfs_user=hdfs_user,
+            hdfs_pass=hdfs_pass,
+    ) as w:
         row = ["0.0"]
         for mn in validation_metrics:
             row.append(str(evaluate_results[mn]))

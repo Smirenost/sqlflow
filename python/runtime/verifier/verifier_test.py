@@ -10,13 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import unittest
 
 import numpy as np
 import runtime.db as db
 import runtime.testing as testing
-from runtime.verifier import fetch_samples, verify_column_name_and_type
+from runtime.verifier import fetch_samples
+from runtime.verifier import verify_column_name_and_type
 
 
 def length(iterable):
@@ -85,26 +85,38 @@ class TestFetchVerifyColumnNameAndType(unittest.TestCase):
         test_table = "iris.test"
 
         train_select = [
-            "petal_length", "petal_width", "sepal_length", "sepal_width",
-            "class"
+            "petal_length",
+            "petal_width",
+            "sepal_length",
+            "sepal_width",
+            "class",
         ]
         test_select = train_select
         verify_column_name_and_type(
-            conn, self.generate_select(train_table, train_select),
-            self.generate_select(test_table, test_select), "class")
+            conn,
+            self.generate_select(train_table, train_select),
+            self.generate_select(test_table, test_select),
+            "class",
+        )
 
         test_select = [
             "petal_length", "petal_width", "sepal_length", "sepal_width"
         ]
         verify_column_name_and_type(
-            conn, self.generate_select(train_table, train_select),
-            self.generate_select(test_table, test_select), "class")
+            conn,
+            self.generate_select(train_table, train_select),
+            self.generate_select(test_table, test_select),
+            "class",
+        )
 
         test_select = ["petal_length", "petal_width", "sepal_length"]
         with self.assertRaises(ValueError):
             verify_column_name_and_type(
-                conn, self.generate_select(train_table, train_select),
-                self.generate_select(test_table, test_select), "class")
+                conn,
+                self.generate_select(train_table, train_select),
+                self.generate_select(test_table, test_select),
+                "class",
+            )
 
         cursor = conn.cursor()
         name_and_type = dict(db.get_table_schema(conn, test_table))
@@ -122,8 +134,11 @@ class TestFetchVerifyColumnNameAndType(unittest.TestCase):
         with self.assertRaises(ValueError):
             test_select = train_select
             verify_column_name_and_type(
-                conn, self.generate_select(train_table, train_select),
-                self.generate_select(new_table_name, test_select), "class")
+                conn,
+                self.generate_select(train_table, train_select),
+                self.generate_select(new_table_name, test_select),
+                "class",
+            )
         cursor.execute(drop_sql)
         cursor.close()
 

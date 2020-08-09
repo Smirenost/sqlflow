@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import atexit
 import copy
 import types
@@ -165,13 +164,13 @@ def run_script(image, command=None, source=None, env=None, resources=None):
 
 
 def run_container(
-    image,
-    command=None,
-    args=None,
-    output=None,
-    env=None,
-    secret=None,
-    resources=None,
+        image,
+        command=None,
+        args=None,
+        output=None,
+        env=None,
+        secret=None,
+        resources=None,
 ):
     """Generate an Argo container template.  For example, the template whalesay
     in https://github.com/argoproj/argo/tree/master/examples#hello-world
@@ -553,8 +552,11 @@ def artifact(path):
 def _predicate(pre, post, condition):
     """Generates an Argo predicate.
     """
-    dict_config = {"pre": pre() if isinstance(pre, types.FunctionType) else pre}
-    dict_config["post"] = post() if isinstance(post, types.FunctionType) else post
+    dict_config = {
+        "pre": pre() if isinstance(pre, types.FunctionType) else pre
+    }
+    dict_config["post"] = post() if isinstance(post,
+                                               types.FunctionType) else post
     # TODO: check the condition
     dict_config["condition"] = condition
 
@@ -715,8 +717,8 @@ def _update_pod_config(template):
 
 def _update_workflow_spec(spec):
 
-    if _cluster_config is not None and \
-            hasattr(_cluster_config, "with_workflow_spec"):
+    if _cluster_config is not None and hasattr(_cluster_config,
+                                               "with_workflow_spec"):
         spec = _cluster_config.with_workflow_spec(spec)
 
     return spec
@@ -749,11 +751,12 @@ class Secret:
         secret_yaml = {
             "apiVersion": "v1",
             "kind": "Secret",
-            "metadata": {"name": self.name},
+            "metadata": {
+                "name": self.name
+            },
             "type": "Opaque",
             "data": {},
         }
-
 
         for key, value in self.data.items():
             encode_val = pyfunc.encode_base64(value)

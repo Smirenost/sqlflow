@@ -10,9 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License
-
-from abc import ABCMeta, abstractmethod
-from urllib.parse import parse_qs, urlparse
+from abc import ABCMeta
+from abc import abstractmethod
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 import six
 
@@ -21,6 +22,7 @@ import six
 class ResultSet(object):
     """Base class for DB query result, caller can iteratable this object
     to get all result rows"""
+
     def __init__(self):
         self._generator = None
 
@@ -90,6 +92,7 @@ class Connection(object):
             format.
 
     """
+
     def __init__(self, conn_uri):
         self.uristr = conn_uri
         self.uripts = self._parse_uri()

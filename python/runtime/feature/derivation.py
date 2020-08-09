@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['infer_feature_columns', 'get_ordered_field_descs']
+__all__ = ["infer_feature_columns", "get_ordered_field_descs"]
 
 import re
 
@@ -35,8 +35,8 @@ def init_column_map(target_fc_map, fc):
     Returns:
         None.
     """
-    if isinstance(fc, (EmbeddingColumn, IndicatorColumn)) \
-            and len(fc.get_field_desc()) == 0:
+    if (isinstance(fc, (EmbeddingColumn, IndicatorColumn))
+            and len(fc.get_field_desc()) == 0):
         if fc.name not in target_fc_map:
             target_fc_map[fc.name] = []
 
@@ -162,8 +162,8 @@ def fill_csv_field_desc(cell, field_desc):
     """
     values = cell.split(",")
     if field_desc.is_sparse:
-        assert field_desc.shape is not None, \
-            "the shape of CSV format data must be given"
+        assert (field_desc.shape is
+                not None), "the shape of CSV format data must be given"
     else:
         if field_desc.shape is None:
             field_desc.shape = [len(values)]
@@ -221,7 +221,7 @@ def fill_kv_field_desc(cell, field_desc):
     split = [s for s in BLANK_PATTERN.split(cell) if s]
     max_idx = field_desc.shape[0]
     for s in split:
-        idx = INT64_TYPE(s.split(':', 2)[0]) + 1
+        idx = INT64_TYPE(s.split(":", 2)[0]) + 1
         if idx > max_idx:
             max_idx = idx
 
@@ -354,9 +354,9 @@ def update_feature_column(fc, fd_map):
         # be in cs.Shape[0]
         bucket_size = field_desc.shape[0]
         if not field_desc.is_sparse:
-            assert field_desc.max_id > 0, \
-                "use dense column on embedding column " \
-                "but did not got a correct MaxID"
+            assert field_desc.max_id > 0, (
+                "use dense column on embedding column "
+                "but did not got a correct MaxID")
             bucket_size = field_desc.max_id + 1
 
         fc.category_column = CategoryIDColumn(field_desc, bucket_size)
@@ -367,10 +367,9 @@ def update_feature_column(fc, fd_map):
         if field_desc is None:
             raise ValueError("column not found or inferred: %s" % fc.name)
 
-        assert field_desc.is_sparse, \
-            "cannot use sparse column with indicator column"
-        assert field_desc.max_id > 0, \
-            "use indicator column but did not got a correct MaxID"
+        assert field_desc.is_sparse, "cannot use sparse column with indicator column"
+        assert (field_desc.max_id >
+                0), "use indicator column but did not got a correct MaxID"
         bucket_size = field_desc.max_id + 1
         fc.category_column = CategoryIDColumn(field_desc, bucket_size)
 
@@ -440,8 +439,8 @@ def derive_feature_columns(targets, fc_map, fd_map, selected_field_names,
             match_field_name = None
             for selected_field_name in selected_field_names:
                 if field_pattern.fullmatch(selected_field_name):
-                    assert match_field_name is None, \
-                        "%s matches duplicate fields" % field_name
+                    assert match_field_name is None, (
+                        "%s matches duplicate fields" % field_name)
                     match_field_name = selected_field_name
 
             if match_field_name is None:
@@ -573,8 +572,8 @@ def derive_label(label, fd_map):
         return  # NOTE: clustering model may not specify Label
 
     label_field_desc = fd_map[label_name]
-    assert label_field_desc is not None, \
-        "deriveLabel: LABEL COLUMN '%s' not found" % label_name
+    assert label_field_desc is not None, (
+        "deriveLabel: LABEL COLUMN '%s' not found" % label_name)
 
     # use shape [] if label shape is [1] for TensorFlow scalar label
     # shape should be [].
@@ -613,8 +612,8 @@ def infer_feature_columns(conn, select, features, label, n=1000):
         raise ValueError("empty dataset")
 
     selected_field_names = generator.field_names
-    assert len(set(selected_field_names)) == len(selected_field_names), \
-        "duplicate selected field names"
+    assert len(set(selected_field_names)) == len(
+        selected_field_names), "duplicate selected field names"
 
     for name in selected_field_names:
         if name not in fd_map:

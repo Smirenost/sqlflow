@@ -10,23 +10,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 
-from alps.client.base import run_experiment, submit_experiment
-from alps.framework.engine import (KubemakerEngine, LocalEngine, ResourceConf,
-                                   YarnEngine)
-from alps.framework.experiment import (EvalConf, Experiment, RuntimeConf,
-                                       TrainConf)
+from alps.client.base import run_experiment
+from alps.client.base import submit_experiment
+from alps.framework.engine import KubemakerEngine
+from alps.framework.engine import LocalEngine
+from alps.framework.engine import ResourceConf
+from alps.framework.engine import YarnEngine
+from alps.framework.experiment import EvalConf
+from alps.framework.experiment import Experiment
+from alps.framework.experiment import RuntimeConf
+from alps.framework.experiment import TrainConf
 from alps.framework.exporter import ExportStrategy
 from alps.framework.exporter.arks_exporter import ArksExporter
-from alps.framework.exporter.base import Goal, MetricComparator
+from alps.framework.exporter.base import Goal
+from alps.framework.exporter.base import MetricComparator
 from alps.io import DatasetX
 from alps.io.base import FeatureMap
 from alps.io.reader.odps_reader import OdpsReader
 
 # for debug usage.
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 sample_engine_config = {
     "name": "YarnEngine",
@@ -35,63 +40,73 @@ sample_engine_config = {
     "ps_mem": 100,
     "ps_num": 2,
     "worker_mem": 1024,
-    "worker_num": 10
+    "worker_num": 10,
 }
 
 
-def train(model_builder,
-          odps_conf=None,
-          project="",
-          train_table="",
-          eval_table="",
-          features=[],
-          labels=[],
-          feature_map_table="",
-          feature_map_partition="",
-          epochs=1,
-          batch_size=1,
-          shuffle=False,
-          shuffle_bufsize=0,
-          cache_file="",
-          max_steps=None,
-          eval_steps=None,
-          eval_batch_size=1,
-          eval_start_delay=120,
-          eval_throttle=600,
-          drop_remainder=True,
-          export_path="",
-          scratch_dir="",
-          user_id="",
-          engine_config={"name": "LocalEngine"},
-          exit_on_submit=False):
+def train(
+        model_builder,
+        odps_conf=None,
+        project="",
+        train_table="",
+        eval_table="",
+        features=[],
+        labels=[],
+        feature_map_table="",
+        feature_map_partition="",
+        epochs=1,
+        batch_size=1,
+        shuffle=False,
+        shuffle_bufsize=0,
+        cache_file="",
+        max_steps=None,
+        eval_steps=None,
+        eval_batch_size=1,
+        eval_start_delay=120,
+        eval_throttle=600,
+        drop_remainder=True,
+        export_path="",
+        scratch_dir="",
+        user_id="",
+        engine_config={"name": "LocalEngine"},
+        exit_on_submit=False,
+):
     if feature_map_table != "":
         feature_map = FeatureMap(table=feature_map_table,
                                  partition=feature_map_partition)
     else:
         feature_map = None
 
-    trainDs = DatasetX(num_epochs=epochs,
-                       batch_size=batch_size,
-                       shuffle=shuffle,
-                       shuffle_buffer_size=shuffle_bufsize,
-                       cache_file=cache_file,
-                       reader=OdpsReader(odps=odps_conf,
-                                         project=project,
-                                         table=train_table,
-                                         features=features,
-                                         labels=labels,
-                                         feature_map=feature_map,
-                                         flatten_group=True),
-                       drop_remainder=drop_remainder)
+    trainDs = DatasetX(
+        num_epochs=epochs,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        shuffle_buffer_size=shuffle_bufsize,
+        cache_file=cache_file,
+        reader=OdpsReader(
+            odps=odps_conf,
+            project=project,
+            table=train_table,
+            features=features,
+            labels=labels,
+            feature_map=feature_map,
+            flatten_group=True,
+        ),
+        drop_remainder=drop_remainder,
+    )
 
-    evalDs = DatasetX(num_epochs=1,
-                      batch_size=eval_batch_size,
-                      reader=OdpsReader(odps=odps_conf,
-                                        project=project,
-                                        table=eval_table,
-                                        features=features,
-                                        labels=labels,
-                                        flatten_group=True))
+    evalDs = DatasetX(
+        num_epochs=1,
+        batch_size=eval_batch_size,
+        reader=OdpsReader(
+            odps=odps_conf,
+            project=project,
+            table=eval_table,
+            features=features,
+            labels=labels,
+            flatten_group=True,
+        ),
+    )
 
     if scratch_dir != "":
         runtime_conf = RuntimeConf(model_dir=scratch_dir)
@@ -102,13 +117,14 @@ def train(model_builder,
     if engine_config["name"] == "LocalEngine":
         engine = LocalEngine()
     elif engine_config["name"] == "YarnEngine":
-        engine = YarnEngine(cluster=engine_config["cluster"],
-                            queue=engine_config["queue"],
-                            ps=ResourceConf(memory=engine_config["ps_mem"],
-                                            num=engine_config["ps_num"]),
-                            worker=ResourceConf(
-                                memory=engine_config["worker_mem"],
-                                num=engine_config["worker_num"]))
+        engine = YarnEngine(
+            cluster=engine_config["cluster"],
+            queue=engine_config["queue"],
+            ps=ResourceConf(memory=engine_config["ps_mem"],
+                            num=engine_config["ps_num"]),
+            worker=ResourceConf(memory=engine_config["worker_mem"],
+                                num=engine_config["worker_num"]),
+        )
     elif engine_config["name"] == "KubemakerEngine":
         engine = KubemakerEngine(
             cluster=engine_config["cluster"],
@@ -116,7 +132,8 @@ def train(model_builder,
             ps=ResourceConf(memory=engine_config["ps_mem"],
                             num=engine_config["ps_num"]),
             worker=ResourceConf(memory=engine_config["worker_mem"],
-                                num=engine_config["worker_num"]))
+                                num=engine_config["worker_num"]),
+        )
     else:
         print("unknown engine type: %s" % engine_config["name"])
         exit(1)
@@ -132,19 +149,22 @@ def train(model_builder,
         eval=EvalConf(
             input=evalDs,
             # FIXME(typhoonzero): Support configure metrics
-            metrics_set=['accuracy'],
+            metrics_set=["accuracy"],
             steps=eval_steps,
             start_delay_secs=eval_start_delay,
             throttle_secs=eval_throttle,
         ),
         # FIXME(typhoonzero): Use ExportStrategy.BEST when possible.
-        exporter=ArksExporter(signature_def_key='predict',
-                              deploy_path=export_path,
-                              strategy=ExportStrategy.LATEST,
-                              compare=MetricComparator("auc", Goal.MAXIMIZE)),
+        exporter=ArksExporter(
+            signature_def_key="predict",
+            deploy_path=export_path,
+            strategy=ExportStrategy.LATEST,
+            compare=MetricComparator("auc", Goal.MAXIMIZE),
+        ),
         arbitrary_evaluator=True,
         runtime=runtime_conf,
-        model_builder=model_builder)
+        model_builder=model_builder,
+    )
 
     if isinstance(experiment.engine, LocalEngine):
         run_experiment(experiment)

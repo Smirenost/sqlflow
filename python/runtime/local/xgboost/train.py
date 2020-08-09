@@ -29,11 +29,13 @@ def init_xgb_booster(load_pretrained_model, filename="my_model"):
     return None
 
 
-def train(train_dataset,
-          train_params,
-          model_params,
-          val_dataset=None,
-          load_pretrained_model=False):
+def train(
+        train_dataset,
+        train_params,
+        model_params,
+        val_dataset=None,
+        load_pretrained_model=False,
+):
     """ XGBoost local training API
 
     Args:

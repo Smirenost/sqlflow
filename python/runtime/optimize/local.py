@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import threading
 
 import numpy as np
@@ -19,8 +18,8 @@ import pyomo.environ as pyomo_env
 import runtime.db as db
 import runtime.verifier as verifier
 import six
-from runtime.optimize.model_generation import (
-    generate_objective_and_constraint_expr, generate_unique_result_value_name)
+from runtime.optimize.model_generation import generate_objective_and_constraint_expr
+from runtime.optimize.model_generation import generate_unique_result_value_name
 
 # FIXME(sneaxiy): do not know why Pyomo requires that the data frame must be
 # a global variable
@@ -28,9 +27,15 @@ DATA_FRAME = None
 DATA_FRAME_LOCK = threading.Lock()
 
 
-def generate_model_with_data_frame(data_frame, variables, variable_type,
-                                   result_value_name, objective, direction,
-                                   constraints):
+def generate_model_with_data_frame(
+        data_frame,
+        variables,
+        variable_type,
+        result_value_name,
+        objective,
+        direction,
+        constraints,
+):
     """
     Generate a Pyomo ConcreteModel.
 
@@ -48,9 +53,9 @@ def generate_model_with_data_frame(data_frame, variables, variable_type,
         A Pyomo ConcreteModel.
     """
     direction = direction.lower()
-    if direction == 'maximize':
+    if direction == "maximize":
         direction = pyomo_env.maximize
-    elif direction == 'minimize':
+    elif direction == "minimize":
         direction = pyomo_env.minimize
     else:
         raise ValueError("direction must be one of 'maximize' or 'minimize'")
@@ -76,7 +81,8 @@ def generate_model_with_data_frame(data_frame, variables, variable_type,
         variables=variables,
         result_value_name=result_value_name,
         variable_str=variable_str,
-        data_str=data_str)
+        data_str=data_str,
+    )
 
     DATA_FRAME_LOCK.acquire()
     try:
@@ -89,8 +95,7 @@ def generate_model_with_data_frame(data_frame, variables, variable_type,
             attr_name = "constraint_%d" % i
 
             if for_range:
-                assert iter_vars, "for_range and iter_vars must be " \
-                                  "both non-empty"
+                assert iter_vars, "for_range and iter_vars must be " "both non-empty"
                 setattr(model, attr_name, pyomo_env.ConstraintList())
                 constraint_list = getattr(model, attr_name)
                 template = "lambda model, constraint_list: [constraint_list.add(%s) for %s in %s]"  # noqa: E501
@@ -98,9 +103,8 @@ def generate_model_with_data_frame(data_frame, variables, variable_type,
                                                  for_range)
                 eval(add_constraint_str)(model, constraint_list)
             else:
-                assert not iter_vars, \
-                    "for_range and iter_vars must be both empty"
-                func = eval('lambda model: %s' % expr)
+                assert not iter_vars, "for_range and iter_vars must be both empty"
+                func = eval("lambda model: %s" % expr)
                 constraint = pyomo_env.Constraint(rule=func)
                 setattr(model, attr_name, constraint)
     finally:
@@ -143,12 +147,13 @@ def solve_model(model, solver):
         if pyomo_dtype is None:
             pyomo_dtype = type(model.x[idx])
 
-        assert isinstance(model.x[idx], pyomo_dtype), \
-            "all variables must be of the same data type"
+        assert isinstance(
+            model.x[idx],
+            pyomo_dtype), "all variables must be of the same data type"
 
     if has_error:
-        msg = 'Solve model error. Termination condition: {}.'\
-            .format(solved_results.solver.termination_condition)
+        msg = "Solve model error. Termination condition: {}.".format(
+            solved_results.solver.termination_condition)
         raise ValueError(msg)
 
     np_dtype = np.int64 if model.x[0].is_integer() else np.float64
@@ -171,7 +176,7 @@ def load_db_data_to_data_frame(datasource, select):
     names = generator.field_names
     dtypes = []
     for dtype in generator.field_types:
-        if dtype in ['VARCHAR', 'CHAR', 'TEXT', 'STRING']:
+        if dtype in ["VARCHAR", "CHAR", "TEXT", "STRING"]:
             dtypes.append(np.str)
         else:
             dtypes.append(np.float64)
@@ -215,7 +220,8 @@ def save_solved_result_in_db(solved_result, data_frame, variables,
     result_value_name = generate_unique_result_value_name(
         columns=data_frame.columns,
         result_value_name=result_value_name,
-        variables=variables)
+        variables=variables,
+    )
 
     column_names.append(result_value_name)
     data_frame[result_value_name] = solved_result
@@ -227,14 +233,23 @@ def save_solved_result_in_db(solved_result, data_frame, variables,
             rows = list(data_frame.loc[i])
             w.write(rows)
 
-    print('Solved result is:')
+    print("Solved result is:")
     print(data_frame)
-    print('Saved in {}.'.format(result_table))
+    print("Saved in {}.".format(result_table))
 
 
-def run_optimize_locally(datasource, select, variables, variable_type,
-                         result_value_name, objective, direction, constraints,
-                         solver, result_table):
+def run_optimize_locally(
+        datasource,
+        select,
+        variables,
+        variable_type,
+        result_value_name,
+        objective,
+        direction,
+        constraints,
+        solver,
+        result_table,
+):
     """
     Run the optimize case in the local mode.
 
@@ -257,17 +272,21 @@ def run_optimize_locally(datasource, select, variables, variable_type,
 
     data_frame = load_db_data_to_data_frame(datasource=datasource,
                                             select=select)
-    model = generate_model_with_data_frame(data_frame=data_frame,
-                                           variables=variables,
-                                           variable_type=variable_type,
-                                           result_value_name=result_value_name,
-                                           objective=objective,
-                                           direction=direction,
-                                           constraints=constraints)
+    model = generate_model_with_data_frame(
+        data_frame=data_frame,
+        variables=variables,
+        variable_type=variable_type,
+        result_value_name=result_value_name,
+        objective=objective,
+        direction=direction,
+        constraints=constraints,
+    )
     solved_result = solve_model(model, solver)
-    save_solved_result_in_db(solved_result=solved_result,
-                             data_frame=data_frame,
-                             variables=variables,
-                             result_value_name=result_value_name,
-                             datasource=datasource,
-                             result_table=result_table)
+    save_solved_result_in_db(
+        solved_result=solved_result,
+        data_frame=data_frame,
+        variables=variables,
+        result_value_name=result_value_name,
+        datasource=datasource,
+        result_table=result_table,
+    )

@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import os
 import shutil
@@ -22,26 +21,29 @@ import six
 import xgboost as xgb
 from runtime import db
 from scipy.sparse import vstack
-from sklearn.datasets import load_svmlight_file, load_svmlight_files
+from sklearn.datasets import load_svmlight_file
+from sklearn.datasets import load_svmlight_files
 
 
-def xgb_dataset(datasource,
-                fn,
-                dataset_sql,
-                feature_metas,
-                feature_column_names,
-                label_meta,
-                is_pai=False,
-                pai_table="",
-                pai_single_file=False,
-                cache=False,
-                batch_size=None,
-                epoch=1,
-                rank=0,
-                nworkers=1,
-                transform_fn=None,
-                feature_column_code="",
-                raw_data_dir=None):
+def xgb_dataset(
+        datasource,
+        fn,
+        dataset_sql,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        is_pai=False,
+        pai_table="",
+        pai_single_file=False,
+        cache=False,
+        batch_size=None,
+        epoch=1,
+        rank=0,
+        nworkers=1,
+        transform_fn=None,
+        feature_column_code="",
+        raw_data_dir=None,
+):
     if raw_data_dir:
         # raw_data_dir is needed when predicting. Because we
         # should write the raw data from the source db into
@@ -56,18 +58,19 @@ def xgb_dataset(datasource,
 
     if is_pai:
         yield from pai_dataset(
-                fn,
-                feature_metas,
-                feature_column_names,
-                label_meta,
-                "odps://{}/tables/{}".format(*pai_table.split(".")),
-                pai_single_file,
-                cache,
-                rank,
-                nworkers,
-                batch_size=batch_size,
-                feature_column_code=feature_column_code,
-                raw_data_dir=raw_data_dir)
+            fn,
+            feature_metas,
+            feature_column_names,
+            label_meta,
+            "odps://{}/tables/{}".format(*pai_table.split(".")),
+            pai_single_file,
+            cache,
+            rank,
+            nworkers,
+            batch_size=batch_size,
+            feature_column_code=feature_column_code,
+            raw_data_dir=raw_data_dir,
+        )
         return
 
     conn = db.connect_with_data_source(datasource)
@@ -78,51 +81,57 @@ def xgb_dataset(datasource,
         step = 0
         # the filename per batch is [filename]_[step]
         step_file_name = "%s_%d" % (fn, step)
-        written_rows = dump_dmatrix(step_file_name,
-                                    gen,
-                                    feature_column_names,
-                                    feature_metas,
-                                    label_meta,
-                                    selected_cols,
-                                    transform_fn=transform_fn,
-                                    raw_data_dir=raw_data_dir)
+        written_rows = dump_dmatrix(
+            step_file_name,
+            gen,
+            feature_column_names,
+            feature_metas,
+            label_meta,
+            selected_cols,
+            transform_fn=transform_fn,
+            raw_data_dir=raw_data_dir,
+        )
 
         while written_rows > 0:
-            yield load_dmatrix('{0}#{0}.cache'.format(step_file_name)
+            yield load_dmatrix("{0}#{0}.cache".format(step_file_name)
                                if cache else step_file_name)
             os.remove(step_file_name)
 
             step += 1
             step_file_name = "%s_%d" % (fn, step)
-            written_rows = dump_dmatrix(step_file_name,
-                                        gen,
-                                        feature_column_names,
-                                        feature_metas,
-                                        label_meta,
-                                        selected_cols,
-                                        transform_fn=transform_fn,
-                                        raw_data_dir=raw_data_dir)
+            written_rows = dump_dmatrix(
+                step_file_name,
+                gen,
+                feature_column_names,
+                feature_metas,
+                label_meta,
+                selected_cols,
+                transform_fn=transform_fn,
+                raw_data_dir=raw_data_dir,
+            )
 
 
-def dump_dmatrix(filename,
-                 generator,
-                 feature_column_names,
-                 feature_metas,
-                 has_label,
-                 selected_cols,
-                 batch_size=None,
-                 transform_fn=None,
-                 raw_data_dir=None):
+def dump_dmatrix(
+        filename,
+        generator,
+        feature_column_names,
+        feature_metas,
+        has_label,
+        selected_cols,
+        batch_size=None,
+        transform_fn=None,
+        raw_data_dir=None,
+):
     # TODO(yancey1989): generate group and weight text file if necessary
     row_id = 0
 
     if raw_data_dir:
-        index = filename.rindex('/') + 1 if '/' in filename else 0
-        raw_data_fid = open(os.path.join(raw_data_dir, filename[index:]), 'a')
+        index = filename.rindex("/") + 1 if "/" in filename else 0
+        raw_data_fid = open(os.path.join(raw_data_dir, filename[index:]), "a")
     else:
         raw_data_fid = None
 
-    with open(filename, 'a') as f:
+    with open(filename, "a") as f:
         for row, label in generator:
             features = db.read_features_from_row(row, selected_cols,
                                                  feature_column_names,
@@ -177,7 +186,7 @@ def dump_dmatrix(filename,
 
 
 def load_dmatrix(filename):
-    '''
+    """
     NOTE(sneaxiy): XGBoost distributed training using rabit would
     split CSV/LIBSVM file into N pieces automatically, where N is
     the worker number. However, in our implementation, we dump
@@ -190,7 +199,7 @@ def load_dmatrix(filename):
 
     See https://github.com/sql-machine-learning/sqlflow/issues/2326
     in detailed.
-    '''
+    """
     if xgb.rabit.get_world_size() <= 1:
         return xgb.DMatrix(filename)
     # XGBoost DMatrix supports to load data from file path like
@@ -200,8 +209,8 @@ def load_dmatrix(filename):
     # is not a valid file path, and it is not supported by
     # load_svmlight_file(s). So we remove the suffix "#..."
     # here before loading the data using load_svmlight_file(s).
-    if '#' in filename:
-        filename = filename[0:filename.index('#')]
+    if "#" in filename:
+        filename = filename[0:filename.index("#")]
 
     if os.path.isdir(filename):
         files = [os.path.join(filename, f) for f in os.listdir(filename)]
@@ -222,38 +231,40 @@ def get_pai_table_slice_count(table, nworkers, batch_size):
 
     row_cnt = db.get_pai_table_row_num(table)
 
-    assert row_cnt >= nworkers, "Data number {} should not " \
-                                "less than worker number {}"\
-        .format(row_cnt, nworkers)
+    assert row_cnt >= nworkers, ("Data number {} should not "
+                                 "less than worker number {}".format(
+                                     row_cnt, nworkers))
 
     slice_num_per_worker = max(int(row_cnt / (nworkers * batch_size)), 1)
     slice_count = slice_num_per_worker * nworkers
 
-    print('row_cnt = {}, slice_count = {}, nworkers = {}'.format(
+    print("row_cnt = {}, slice_count = {}, nworkers = {}".format(
         row_cnt, slice_count, nworkers))
 
     return slice_count
 
 
-def pai_dataset(filename,
-                feature_metas,
-                feature_column_names,
-                label_meta,
-                pai_table,
-                single_file,
-                cache,
-                rank=0,
-                nworkers=1,
-                batch_size=None,
-                feature_column_code="",
-                raw_data_dir=None):
+def pai_dataset(
+        filename,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        pai_table,
+        single_file,
+        cache,
+        rank=0,
+        nworkers=1,
+        batch_size=None,
+        feature_column_code="",
+        raw_data_dir=None,
+):
     from subprocess import Popen, PIPE
     from multiprocessing.dummy import Pool  # ThreadPool
     import queue
 
     dname = filename
     if single_file:
-        dname = filename + '.dir'
+        dname = filename + ".dir"
 
     if os.path.exists(dname):
         shutil.rmtree(dname, ignore_errors=True)
@@ -273,13 +284,18 @@ def pai_dataset(filename,
                   stdin=PIPE)
         p.communicate(
             json.dumps([
-                dname, feature_metas, feature_column_names, label_meta,
-                pai_table, slice_id, slice_count, feature_column_code,
-                raw_data_dir
+                dname,
+                feature_metas,
+                feature_column_names,
+                label_meta,
+                pai_table,
+                slice_id,
+                slice_count,
+                feature_column_code,
+                raw_data_dir,
             ]))
 
-        assert p.returncode == 0, \
-            "The subprocess raises error when reading data"
+        assert p.returncode == 0, "The subprocess raises error when reading data"
         complete_queue.put(slice_id)
 
     slice_id = rank
@@ -292,7 +308,7 @@ def pai_dataset(filename,
     if batch_size is None:
         pool.close()
         pool.join()
-        yield load_dmatrix('{0}#{0}.cache'.format(dname) if cache else dname)
+        yield load_dmatrix("{0}#{0}.cache".format(dname) if cache else dname)
         return
 
     for _ in six.moves.range(slice_total):
@@ -301,7 +317,7 @@ def pai_dataset(filename,
             downloaded_file = "./{}/{}.txt".format(dname, slice_id)
             # ignore empty files or the xgb.DMatrix will throw error.
             if Path(downloaded_file).stat().st_size > 0:
-                yield load_dmatrix('{0}#{0}.cache'.format(downloaded_file)
+                yield load_dmatrix("{0}#{0}.cache".format(downloaded_file)
                                    if cache else downloaded_file)
                 os.unlink(downloaded_file)
 
@@ -316,39 +332,49 @@ def pai_dataset(filename,
 
         merge_files(dname, filename)
         if raw_data_dir:
-            merge_files(raw_data_dir, '{}.raw'.format(filename))
+            merge_files(raw_data_dir, "{}.raw".format(filename))
 
         yield load_dmatrix(
-            '{0}#{0}.cache'.format(filename) if cache else filename)
+            "{0}#{0}.cache".format(filename) if cache else filename)
 
     pool.close()
     pool.join()
 
 
-def pai_download_table_data_worker(dname, feature_metas, feature_column_names,
-                                   label_meta, pai_table, slice_id,
-                                   slice_count, feature_column_code,
-                                   raw_data_dir):
+def pai_download_table_data_worker(
+        dname,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        pai_table,
+        slice_id,
+        slice_count,
+        feature_column_code,
+        raw_data_dir,
+):
     import runtime.xgboost as xgboost_extended
-    feature_column_transformers = eval('[{}]'.format(feature_column_code))
+
+    feature_column_transformers = eval("[{}]".format(feature_column_code))
     transform_fn = xgboost_extended.feature_column.ComposedColumnTransformer(
         feature_column_names, *feature_column_transformers)
 
-    label_column_name = label_meta['feature_name'] if label_meta else None
+    label_column_name = label_meta["feature_name"] if label_meta else None
     gen = db.pai_maxcompute_db_generator(pai_table,
                                          label_column_name,
                                          slice_id=slice_id,
                                          slice_count=slice_count)()
     selected_cols = db.pai_selected_cols(pai_table)
     filename = "{}/{}.txt".format(dname, slice_id)
-    dump_dmatrix(filename,
-                 gen,
-                 feature_column_names,
-                 feature_metas,
-                 label_meta,
-                 selected_cols,
-                 transform_fn=transform_fn,
-                 raw_data_dir=raw_data_dir)
+    dump_dmatrix(
+        filename,
+        gen,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        selected_cols,
+        transform_fn=transform_fn,
+        raw_data_dir=raw_data_dir,
+    )
 
 
 if __name__ == "__main__":

@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import unittest
 
@@ -20,13 +19,15 @@ import runtime.feature.field_desc as fd
 
 class TestFeatureColumn(unittest.TestCase):
     def new_field_desc(self):
-        return fd.FieldDesc(name="my_feature",
-                            dtype=fd.DataType.FLOAT,
-                            delimiter=",",
-                            format=fd.DataFormat.CSV,
-                            shape=[10],
-                            is_sparse=True,
-                            vocabulary=["a", "b", "c"])
+        return fd.FieldDesc(
+            name="my_feature",
+            dtype=fd.DataType.FLOAT,
+            delimiter=",",
+            format=fd.DataFormat.CSV,
+            shape=[10],
+            is_sparse=True,
+            vocabulary=["a", "b", "c"],
+        )
 
     def check_serialize(self, feature_column):
         d = fc.FeatureColumn.to_dict(feature_column)
@@ -128,8 +129,9 @@ class TestFeatureColumn(unittest.TestCase):
         bucket_size = 13
 
         for fc_class in [
-                fc.CategoryIDColumn, fc.CategoryHashColumn,
-                fc.SeqCategoryIDColumn
+                fc.CategoryIDColumn,
+                fc.CategoryHashColumn,
+                fc.SeqCategoryIDColumn,
         ]:
             cc = fc_class(desc, bucket_size)
             self.assertEqual(cc.num_class(), bucket_size)
@@ -158,12 +160,12 @@ class TestFeatureColumn(unittest.TestCase):
         desc = self.new_field_desc()
         nc = fc.NumericColumn(desc)
         hash_bucket_size = 1024
-        cc = fc.CrossColumn([nc, 'cross_feature_2'], hash_bucket_size)
+        cc = fc.CrossColumn([nc, "cross_feature_2"], hash_bucket_size)
         self.assertEqual(cc.num_class(), hash_bucket_size)
         descs = cc.get_field_desc()
         self.assertEqual(len(descs), 2)
         self.assertEqual(descs[0].to_json(), desc.to_json())
-        self.assertEqual(descs[1].name, 'cross_feature_2')
+        self.assertEqual(descs[1].name, "cross_feature_2")
 
         d = fc.FeatureColumn.to_dict(cc)
         self.assertEqual(d["type"], "CrossColumn")
@@ -216,5 +218,5 @@ class TestFeatureColumn(unittest.TestCase):
             self.check_serialize(fc2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

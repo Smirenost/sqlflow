@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import contextlib
 import re
 
@@ -79,6 +78,7 @@ def connect_with_data_source(driver_dsn):
         # NOTE: use MySQLdb to avoid bugs like infinite reading:
         # https://bugs.mysql.com/bug.php?id=91971
         from MySQLdb import connect
+
         user, passwd, host, port, database, config = parseMySQLDSN(dsn)
         conn = connect(user=user,
                        passwd=passwd,
@@ -87,18 +87,22 @@ def connect_with_data_source(driver_dsn):
                        port=int(port))
     elif driver == "hive":
         from impala.dbapi import connect
+
         user, passwd, host, port, database, auth, session_cfg = parseHiveDSN(
             dsn)
-        conn = connect(user=user,
-                       password=passwd,
-                       database=database,
-                       host=host,
-                       port=int(port),
-                       auth_mechanism=auth)
+        conn = connect(
+            user=user,
+            password=passwd,
+            database=database,
+            host=host,
+            port=int(port),
+            auth_mechanism=auth,
+        )
         conn.session_cfg = session_cfg
         conn.default_db = database
     elif driver == "maxcompute":
         from runtime.maxcompute import MaxCompute
+
         user, passwd, address, database = parseMaxComputeDSN(dsn)
         conn = MaxCompute.connect(database, user, passwd, address)
     else:
@@ -122,6 +126,7 @@ def connect(driver,
         # NOTE: use MySQLdb to avoid bugs like infinite reading:
         # https://bugs.mysql.com/bug.php?id=91971
         from MySQLdb import connect
+
         conn = connect(user=user,
                        passwd=password,
                        db=database,
@@ -129,16 +134,20 @@ def connect(driver,
                        port=int(port))
     elif driver == "hive":
         from impala.dbapi import connect
-        conn = connect(user=user,
-                       password=password,
-                       database=database,
-                       host=host,
-                       port=int(port),
-                       auth_mechanism=auth)
+
+        conn = connect(
+            user=user,
+            password=password,
+            database=database,
+            host=host,
+            port=int(port),
+            auth_mechanism=auth,
+        )
         conn.default_db = database
         conn.session_cfg = session_cfg
     elif driver == "maxcompute":
         from runtime.maxcompute import MaxCompute
+
         conn = MaxCompute.connect(database, user, password, host)
     else:
         raise ValueError("unrecognized database driver: %s" % driver)
@@ -155,7 +164,7 @@ def read_feature(raw_val, feature_spec, feature_name):
     if feature_spec["is_sparse"]:
         if feature_spec["format"] == "kv":
             items = raw_val.split()
-            items = [item.split(':', 2) for item in items]
+            items = [item.split(":", 2) for item in items]
             indices = np.array([int(item[0]) for item in items],
                                dtype=np.int64)
             values = np.array([float(item[1]) for item in items],
@@ -180,19 +189,19 @@ def read_feature(raw_val, feature_spec, feature_name):
                                  dtype=np.int64,
                                  sep=feature_spec["delimiter"])
         else:
-            raise ValueError('unrecognize dtype {}'.format(
+            raise ValueError("unrecognize dtype {}".format(
                 feature_spec[feature_name]["dtype"]))
     elif feature_spec["dtype"] == "float32":
-        return float(raw_val),
+        return (float(raw_val), )
     elif feature_spec["dtype"] == "int64":
         int_raw_val = INT64_TYPE(raw_val)
-        return int_raw_val,
+        return (int_raw_val, )
     elif feature_spec["dtype"] == "string":
-        return str(raw_val),
+        return (str(raw_val), )
     else:
         # This case is used for unittests.
         # For example, explain_test.py uses int32 data.
-        return raw_val,
+        return (raw_val, )
 
 
 LIMIT_PATTERN = re.compile("LIMIT\\s+([0-9]+)", flags=re.I)
@@ -228,6 +237,7 @@ def limit_select(select, n):
 
 try:
     import MySQLdb.constants.FIELD_TYPE as MYSQL_FIELD_TYPE
+
     # Refer to
     # http://mysql-python.sourceforge.net/MySQLdb-1.2.2/public/MySQLdb.constants.FIELD_TYPE-module.html # noqa: E501
     MYSQL_FIELD_TYPE_DICT = {
@@ -246,7 +256,7 @@ except:  # noqa: E722
 
 
 def _get_mysql_columns_and_types(cursor):
-    '''
+    """
     Get the column names and types of the MySQL cursor.
 
     Args:
@@ -254,7 +264,7 @@ def _get_mysql_columns_and_types(cursor):
 
     Returns:
         A tuple whose each element is (column_name, column_type).
-    '''
+    """
     name_and_type = []
     for desc in cursor.description:
         # NOTE: MySQL returns an integer number instead of a string
@@ -268,7 +278,7 @@ def _get_mysql_columns_and_types(cursor):
 
 
 def _get_hive_columns_and_types(cursor):
-    '''
+    """
     Get the column names and types of the Hive cursor.
 
     Args:
@@ -276,10 +286,10 @@ def _get_hive_columns_and_types(cursor):
 
     Returns:
         A tuple whose each element is (column_name, column_type).
-    '''
+    """
     name_and_type = []
     for desc in cursor.description:
-        name = desc[0].split('.')[-1]
+        name = desc[0].split(".")[-1]
         name_and_type.append((name, desc[1]))
     return name_and_type
 
@@ -315,6 +325,7 @@ def selected_columns_and_types(conn, select):
 
     if driver == "maxcompute":
         from runtime.maxcompute import MaxCompute
+
         return MaxCompute.selected_columns_and_types(conn, select)
 
     raise NotImplementedError("unsupported driver {}".format(driver))
@@ -327,15 +338,17 @@ def selected_cols(conn, select):
 
 def pai_selected_cols(table):
     import paiio
+
     reader = paiio.TableReader(table)
     schema = reader.get_schema()
-    selected_cols = [i['colname'] for i in schema]
+    selected_cols = [i["colname"] for i in schema]
     reader.close()
     return selected_cols
 
 
 def get_pai_table_row_num(table):
     import paiio
+
     reader = paiio.TableReader(table)
     row_num = reader.get_row_count()
     reader.close()
@@ -412,10 +425,11 @@ def db_generator(conn, statement, label_meta=None, fetch_size=128):
 
     if driver == "maxcompute":
         from runtime.maxcompute import MaxCompute
+
         return MaxCompute.db_generator(conn, statement, label_meta, fetch_size)
     if driver == "hive":
         # trip the suffix ';' to avoid the ParseException in hive
-        statement = statement.rstrip(';')
+        statement = statement.rstrip(";")
     return reader
 
 
@@ -425,13 +439,14 @@ def pai_maxcompute_db_generator(table,
                                 slice_count=1):
     def reader():
         import paiio
+
         pai_reader = paiio.TableReader(table,
                                        slice_id=slice_id,
                                        slice_count=slice_count)
 
-        selected_cols = [item['colname'] for item in pai_reader.get_schema()]
-        label_index = selected_cols.index(
-            label_column_name) if label_column_name else None
+        selected_cols = [item["colname"] for item in pai_reader.get_schema()]
+        label_index = (selected_cols.index(label_column_name)
+                       if label_column_name else None)
 
         while True:
             try:
@@ -449,24 +464,28 @@ def pai_maxcompute_db_generator(table,
 
 
 @contextlib.contextmanager
-def buffered_db_writer(driver,
-                       conn,
-                       table_name,
-                       table_schema,
-                       buff_size=100,
-                       hdfs_namenode_addr="",
-                       hive_location="",
-                       hdfs_user="",
-                       hdfs_pass=""):
+def buffered_db_writer(
+        driver,
+        conn,
+        table_name,
+        table_schema,
+        buff_size=100,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+):
     if driver == "hive":
-        w = db_writer.HiveDBWriter(conn,
-                                   table_name,
-                                   table_schema,
-                                   buff_size,
-                                   hdfs_namenode_addr=hdfs_namenode_addr,
-                                   hive_location=hive_location,
-                                   hdfs_user=hdfs_user,
-                                   hdfs_pass=hdfs_pass)
+        w = db_writer.HiveDBWriter(
+            conn,
+            table_name,
+            table_schema,
+            buff_size,
+            hdfs_namenode_addr=hdfs_namenode_addr,
+            hive_location=hive_location,
+            hdfs_user=hdfs_user,
+            hdfs_pass=hdfs_pass,
+        )
     elif driver == "maxcompute":
         w = db_writer.MaxComputeDBWriter(conn, table_name, table_schema,
                                          buff_size)
@@ -496,8 +515,7 @@ def get_table_schema(conn, table):
     """
     if conn.driver == "maxcompute":
         schema = conn.get_table(table).schema
-        return [(c.name, str(c.type).upper())
-                           for c in schema.columns]
+        return [(c.name, str(c.type).upper()) for c in schema.columns]
     else:
         statement = "describe %s" % table
         cursor = conn.cursor()
@@ -567,7 +585,7 @@ def query(conn, statement, fetch_size=128):
     # modify db_generator to call this function
     if driver == "hive":
         # trip the suffix ';' to avoid the ParseException in hive
-        statement = statement.rstrip(';')
+        statement = statement.rstrip(";")
         cursor = conn.cursor(configuration=conn.session_cfg)
     else:
         cursor = conn.cursor()

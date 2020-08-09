@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import copy
 import functools
 
@@ -69,15 +68,17 @@ def tf_generator(gen, selected_cols, feature_column_names, feature_metas):
     return reader
 
 
-def input_fn(select,
-             datasource,
-             feature_column_names,
-             feature_metas,
-             label_meta,
-             is_pai=False,
-             pai_table="",
-             num_workers=1,
-             worker_id=0):
+def input_fn(
+        select,
+        datasource,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        is_pai=False,
+        pai_table="",
+        num_workers=1,
+        worker_id=0,
+):
     feature_types = []
     shapes = []
     for name in feature_column_names:
@@ -90,12 +91,14 @@ def input_fn(select,
             shapes.append(feature_metas[name]["shape"])
     if is_pai:
         pai_table = "odps://{}/tables/{}".format(*pai_table.split("."))
-        return pai_dataset(pai_table,
-                           feature_column_names,
-                           label_meta,
-                           feature_metas,
-                           slice_id=worker_id,
-                           slice_count=num_workers)
+        return pai_dataset(
+            pai_table,
+            feature_column_names,
+            label_meta,
+            feature_metas,
+            slice_id=worker_id,
+            slice_count=num_workers,
+        )
     else:
         conn = db.connect_with_data_source(datasource)
         gen = db.db_generator(conn, select, label_meta)
@@ -110,15 +113,19 @@ def input_fn(select,
         ds_mapper = functools.partial(
             parse_sparse_feature_predict,
             feature_column_names=feature_column_names,
-            feature_metas=feature_metas)
+            feature_metas=feature_metas,
+        )
     else:
         dataset = tf.data.Dataset.from_generator(
-            gen, (tuple(feature_types), eval("tf.%s" % label_meta["dtype"])),
-            (tuple(shapes), label_meta["shape"]))
+            gen,
+            (tuple(feature_types), eval("tf.%s" % label_meta["dtype"])),
+            (tuple(shapes), label_meta["shape"]),
+        )
         ds_mapper = functools.partial(
             parse_sparse_feature,
             feature_column_names=feature_column_names,
-            feature_metas=feature_metas)
+            feature_metas=feature_metas,
+        )
     return dataset.map(ds_mapper)
 
 
@@ -130,7 +137,9 @@ def read_feature_as_tensor(raw_val, feature_spec, feature_name):
         indices = tf.strings.to_number(
             tf.strings.split(raw_val,
                              feature_spec["delimiter"],
-                             result_type='RaggedTensor'), tf.int64)
+                             result_type="RaggedTensor"),
+            tf.int64,
+        )
         values = tf.fill(tf.shape(indices), 1)
         indices = tf.expand_dims(indices, 1)
         dense_shape = np.array(feature_spec["shape"], dtype=np.int64)
@@ -139,8 +148,9 @@ def read_feature_as_tensor(raw_val, feature_spec, feature_name):
         return tf.strings.to_number(
             tf.strings.split(raw_val,
                              feature_spec["delimiter"],
-                             result_type='RaggedTensor'),
-            feature_spec["dtype"])
+                             result_type="RaggedTensor"),
+            feature_spec["dtype"],
+        )
 
 
 def parse_pai_dataset(feature_column_names, label_meta, feature_metas, *row):
@@ -155,7 +165,7 @@ def parse_pai_dataset(feature_column_names, label_meta, feature_metas, *row):
         # item, should get label index.
         tmp = tf.strings.split(label,
                                sep=label_meta["delimiter"],
-                               result_type='RaggedTensor')
+                               result_type="RaggedTensor")
         if label_meta["dtype"] == "float32":
             label = tf.strings.to_number(tmp, out_type=tf.dtypes.float32)
         elif label_meta["dtype"] == "int64":
@@ -184,39 +194,46 @@ def pai_dataset(table,
             dtypes.append(label_meta["dtype"])
 
     import paiio
+
     return paiio.TableRecordDataset(
-        table, ["" if t == "string" else eval("np.%s()" % t) for t in dtypes],
+        table,
+        ["" if t == "string" else eval("np.%s()" % t) for t in dtypes],
         selected_cols=",".join(selected_cols),
         slice_id=slice_id,
         slice_count=slice_count,
         capacity=2**25,
-        num_threads=64).map(
-            functools.partial(parse_pai_dataset, feature_column_names,
-                              label_meta, feature_metas))
+        num_threads=64,
+    ).map(
+        functools.partial(parse_pai_dataset, feature_column_names, label_meta,
+                          feature_metas))
 
 
-def get_dataset_fn(select,
-                   datasource,
-                   feature_column_names,
-                   feature_metas,
-                   label_meta,
-                   is_pai,
-                   pai_table,
-                   batch_size,
-                   epochs=1,
-                   shuffle_size=None,
-                   num_workers=1,
-                   worker_id=0):
+def get_dataset_fn(
+        select,
+        datasource,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        is_pai,
+        pai_table,
+        batch_size,
+        epochs=1,
+        shuffle_size=None,
+        num_workers=1,
+        worker_id=0,
+):
     def dataset_input_fn():
-        dataset = input_fn(select,
-                           datasource,
-                           feature_column_names,
-                           feature_metas,
-                           label_meta,
-                           is_pai=is_pai,
-                           pai_table=pai_table,
-                           num_workers=num_workers,
-                           worker_id=worker_id)
+        dataset = input_fn(
+            select,
+            datasource,
+            feature_column_names,
+            feature_metas,
+            label_meta,
+            is_pai=is_pai,
+            pai_table=pai_table,
+            num_workers=num_workers,
+            worker_id=worker_id,
+        )
         dataset = dataset.cache("cache_train")
         if shuffle_size is not None:
             dataset = dataset.shuffle(shuffle_size)

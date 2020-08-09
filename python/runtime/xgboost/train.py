@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import sys
 
@@ -18,32 +17,36 @@ import runtime.pai.pai_distributed as pai_dist
 import six
 import xgboost as xgb
 from runtime import oss as pai_model_store
-from runtime.model_metadata import collect_model_metadata, save_model_metadata
+from runtime.model_metadata import collect_model_metadata
+from runtime.model_metadata import save_model_metadata
 from runtime.xgboost.dataset import xgb_dataset
-from runtime.xgboost.pai_rabit import PaiXGBoostTracker, PaiXGBoostWorker
+from runtime.xgboost.pai_rabit import PaiXGBoostTracker
+from runtime.xgboost.pai_rabit import PaiXGBoostWorker
 
 
-def dist_train(flags,
-               datasource,
-               select,
-               model_params,
-               train_params,
-               feature_metas,
-               feature_column_names,
-               label_meta,
-               validation_select,
-               disk_cache=False,
-               batch_size=None,
-               epoch=1,
-               load_pretrained_model=False,
-               is_pai=False,
-               pai_train_table="",
-               pai_validate_table="",
-               oss_model_dir="",
-               transform_fn=None,
-               feature_column_code="",
-               model_repo_image="",
-               original_sql=""):
+def dist_train(
+        flags,
+        datasource,
+        select,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        validation_select,
+        disk_cache=False,
+        batch_size=None,
+        epoch=1,
+        load_pretrained_model=False,
+        is_pai=False,
+        pai_train_table="",
+        pai_validate_table="",
+        oss_model_dir="",
+        transform_fn=None,
+        feature_column_code="",
+        model_repo_image="",
+        original_sql="",
+):
     if not is_pai:
         raise Exception(
             "XGBoost distributed training is only supported on PAI")
@@ -57,108 +60,118 @@ def dist_train(flags,
     tracker = None
     print("node={}, task_id={}, cluster={}".format(node, task_id, cluster))
     try:
-        if node == 'ps':
+        if node == "ps":
             if task_id == 0:
                 tracker = PaiXGBoostTracker(host=master_host,
                                             nworkers=num_workers,
                                             port=master_port)
         else:
-            if node != 'chief':
+            if node != "chief":
                 task_id += 1
-            envs = PaiXGBoostWorker.gen_envs(host=master_host,
-                                             port=master_port,
-                                             ttl=200,
-                                             nworkers=num_workers,
-                                             task_id=task_id)
+            envs = PaiXGBoostWorker.gen_envs(
+                host=master_host,
+                port=master_port,
+                ttl=200,
+                nworkers=num_workers,
+                task_id=task_id,
+            )
             xgb.rabit.init(envs)
             rank = xgb.rabit.get_rank()
 
-            train(datasource,
-                  select,
-                  model_params,
-                  train_params,
-                  feature_metas,
-                  feature_column_names,
-                  label_meta,
-                  validation_select,
-                  disk_cache,
-                  batch_size,
-                  epoch,
-                  load_pretrained_model,
-                  is_pai,
-                  pai_train_table,
-                  pai_validate_table,
-                  rank,
-                  nworkers=num_workers,
-                  oss_model_dir=oss_model_dir,
-                  transform_fn=transform_fn,
-                  feature_column_code=feature_column_code,
-                  model_repo_image=model_repo_image,
-                  original_sql=original_sql)
+            train(
+                datasource,
+                select,
+                model_params,
+                train_params,
+                feature_metas,
+                feature_column_names,
+                label_meta,
+                validation_select,
+                disk_cache,
+                batch_size,
+                epoch,
+                load_pretrained_model,
+                is_pai,
+                pai_train_table,
+                pai_validate_table,
+                rank,
+                nworkers=num_workers,
+                oss_model_dir=oss_model_dir,
+                transform_fn=transform_fn,
+                feature_column_code=feature_column_code,
+                model_repo_image=model_repo_image,
+                original_sql=original_sql,
+            )
     except Exception as e:
         print("node={}, id={}, exception={}".format(node, task_id, e))
         six.reraise(*sys.exc_info())  # For better backtrace
     finally:
         if tracker is not None:
             tracker.join()
-        if node != 'ps':
+        if node != "ps":
             xgb.rabit.finalize()
 
 
-def train(datasource,
-          select,
-          model_params,
-          train_params,
-          feature_metas,
-          feature_column_names,
-          label_meta,
-          validation_select,
-          disk_cache=False,
-          batch_size=None,
-          epoch=1,
-          load_pretrained_model=False,
-          is_pai=False,
-          pai_train_table="",
-          pai_validate_table="",
-          rank=0,
-          nworkers=1,
-          oss_model_dir="",
-          transform_fn=None,
-          feature_column_code="",
-          model_repo_image="",
-          original_sql=""):
+def train(
+        datasource,
+        select,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        validation_select,
+        disk_cache=False,
+        batch_size=None,
+        epoch=1,
+        load_pretrained_model=False,
+        is_pai=False,
+        pai_train_table="",
+        pai_validate_table="",
+        rank=0,
+        nworkers=1,
+        oss_model_dir="",
+        transform_fn=None,
+        feature_column_code="",
+        model_repo_image="",
+        original_sql="",
+):
     if batch_size == -1:
         batch_size = None
     print("Start training XGBoost model...")
-    dtrain = xgb_dataset(datasource,
-                         'train.txt',
-                         select,
-                         feature_metas,
-                         feature_column_names,
-                         label_meta,
-                         is_pai,
-                         pai_train_table,
-                         cache=disk_cache,
-                         batch_size=batch_size,
-                         epoch=epoch,
-                         rank=rank,
-                         nworkers=nworkers,
-                         transform_fn=transform_fn,
-                         feature_column_code=feature_column_code)
+    dtrain = xgb_dataset(
+        datasource,
+        "train.txt",
+        select,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        is_pai,
+        pai_train_table,
+        cache=disk_cache,
+        batch_size=batch_size,
+        epoch=epoch,
+        rank=rank,
+        nworkers=nworkers,
+        transform_fn=transform_fn,
+        feature_column_code=feature_column_code,
+    )
     if len(validation_select.strip()) > 0:
         dvalidate = list(
-            xgb_dataset(datasource,
-                        'validate.txt',
-                        validation_select,
-                        feature_metas,
-                        feature_column_names,
-                        label_meta,
-                        is_pai,
-                        pai_validate_table,
-                        rank=rank,
-                        nworkers=nworkers,
-                        transform_fn=transform_fn,
-                        feature_column_code=feature_column_code))[0]
+            xgb_dataset(
+                datasource,
+                "validate.txt",
+                validation_select,
+                feature_metas,
+                feature_column_names,
+                label_meta,
+                is_pai,
+                pai_validate_table,
+                rank=rank,
+                nworkers=nworkers,
+                transform_fn=transform_fn,
+                feature_column_code=feature_column_code,
+            ))[0]
 
     filename = "my_model"
     if load_pretrained_model:
@@ -182,21 +195,36 @@ def train(datasource,
         print("Evaluation result: %s" % re)
 
     if rank == 0:
-        metadata = collect_model_metadata(original_sql, select,
-                                          validation_select, "XGBoost",
-                                          model_params, train_params,
-                                          feature_metas, label_meta, re,
-                                          model_repo_image)
+        metadata = collect_model_metadata(
+            original_sql,
+            select,
+            validation_select,
+            "XGBoost",
+            model_params,
+            train_params,
+            feature_metas,
+            label_meta,
+            re,
+            model_repo_image,
+        )
         save_model_to_local_file(bst, model_params, metadata, filename)
 
         if is_pai and len(oss_model_dir) > 0:
-            save_model(oss_model_dir, filename, model_params, train_params,
-                       feature_metas, feature_column_names, label_meta,
-                       feature_column_code)
+            save_model(
+                oss_model_dir,
+                filename,
+                model_params,
+                train_params,
+                feature_metas,
+                feature_column_names,
+                label_meta,
+                feature_column_code,
+            )
 
 
 def save_model_to_local_file(booster, model_params, meta, filename):
     from sklearn2pmml import PMMLPipeline, sklearn2pmml
+
     try:
         from xgboost.compat import XGBoostLabelEncoder
     except:  # noqa: E722
@@ -212,8 +240,8 @@ def save_model_to_local_file(booster, model_params, meta, filename):
             num_class = 2
         else:
             num_class = model_params.get("num_class")
-            assert num_class is not None and num_class > 0, \
-                "num_class should not be None"
+            assert (num_class is not None
+                    and num_class > 0), "num_class should not be None"
 
         # To fake a trained XGBClassifier, there must be "_le", "classes_",
         # inside XGBClassifier. See here:
@@ -249,8 +277,16 @@ def save_model_to_local_file(booster, model_params, meta, filename):
     sklearn2pmml(pipeline, "{}.pmml".format(filename))
 
 
-def save_model(model_dir, filename, model_params, train_params, feature_metas,
-               feature_column_names, label_meta, feature_column_code):
+def save_model(
+        model_dir,
+        filename,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        feature_column_code,
+):
     pai_model_store.save_file(model_dir, filename)
     pai_model_store.save_file(model_dir, "{}.pmml".format(filename))
     pai_model_store.save_file(model_dir, "model_meta.json")
@@ -265,4 +301,5 @@ def save_model(model_dir, filename, model_params, train_params, feature_metas,
         feature_metas,
         feature_column_names,
         label_meta,
-        feature_column_code)
+        feature_column_code,
+    )
