@@ -297,7 +297,6 @@ def _extract_step_return(step_output):
     # In case user input a normal variable
     if "couler" not in step_output:
         ret["value"] = step_output
-        return ret
     else:
         tmp = step_output.split(".")
         if len(tmp) < 5:
@@ -310,7 +309,8 @@ def _extract_step_return(step_output):
             output = output + "." + item
 
         ret = {"name": name, "id": function_id, "output": output}
-        return ret
+
+    return ret
 
 
 def when(condition, func1):
@@ -553,17 +553,8 @@ def artifact(path):
 def _predicate(pre, post, condition):
     """Generates an Argo predicate.
     """
-    dict_config = {}
-    if isinstance(pre, types.FunctionType):
-        dict_config["pre"] = pre()
-    else:
-        dict_config["pre"] = pre
-
-    if isinstance(post, types.FunctionType):
-        dict_config["post"] = post()
-    else:
-        dict_config["post"] = post
-
+    dict_config = {"pre": pre() if isinstance(pre, types.FunctionType) else pre}
+    dict_config["post"] = post() if isinstance(post, types.FunctionType) else post
     # TODO: check the condition
     dict_config["condition"] = condition
 
@@ -630,10 +621,7 @@ def _convert_dict_to_list(d):
     if not isinstance(d, dict):
         raise TypeError("The input parameter `d` is not a dict.")
 
-    env_list = []
-    for k, v in d.items():
-        env_list.append({"name": str(k), "value": str(v)})
-    return env_list
+    return [{"name": str(k), "value": str(v)} for k, v in d.items()]
 
 
 def _convert_dict_to_env_list(d):
@@ -690,12 +678,11 @@ def _resources(resources):
     """
 
     if isinstance(resources, dict):
-        resource_ = {
+        return {
             "requests": resources,
             # to fix the mojibake issue when dump yaml for one object
             "limits": copy.deepcopy(resources),
         }
-        return resource_
     else:
         raise TypeError("container resource config need to be a dict")
 
@@ -747,10 +734,7 @@ def clean_workflow_after_seconds_finished(seconds):
 class Secret:
     def __init__(self, secret_data, name=None, dry_run=False):
         self.data = secret_data
-        if name is not None:
-            self.name = name
-        else:
-            self.name = "couler-" + str(uuid.uuid4())
+        self.name = name if name is not None else "couler-" + str(uuid.uuid4())
         if not dry_run:
             global _secrets
             _secrets = self.generate_secret_yaml()
@@ -765,13 +749,12 @@ class Secret:
         secret_yaml = {
             "apiVersion": "v1",
             "kind": "Secret",
-            "metadata": {
-                "name": self.name
-            },
+            "metadata": {"name": self.name},
             "type": "Opaque",
+            "data": {},
         }
 
-        secret_yaml["data"] = {}
+
         for key, value in self.data.items():
             encode_val = pyfunc.encode_base64(value)
             secret_yaml["data"][key] = encode_val

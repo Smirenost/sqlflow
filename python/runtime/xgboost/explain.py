@@ -22,9 +22,9 @@ from runtime import db, explainer
 
 def infer_dtype(feature):
     if isinstance(feature, np.ndarray):
-        if feature.dtype == np.float32 or feature.dtype == np.float64:
+        if feature.dtype in [np.float32, np.float64]:
             return 'float32'
-        elif feature.dtype == np.int32 or feature.dtype == np.int64:
+        elif feature.dtype in [np.int32, np.int64]:
             return 'int64'
         else:
             raise ValueError('Not supported data type {}'.format(

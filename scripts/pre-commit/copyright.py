@@ -47,21 +47,14 @@ COPYRIGHT_HEADER = COPYRIGHT_HEADER.replace(p, date)
 
 
 def generate_copyright(template, lang='go'):
-    if lang in ['Python', 'shell']:
-        LANG_COMMENT_MARK = '#'
-    else:
-        LANG_COMMENT_MARK = "//"
-
+    LANG_COMMENT_MARK = '#' if lang in ['Python', 'shell'] else "//"
     lines = template.split(NEW_LINE_MARK)
     BLANK = " "
     ans = LANG_COMMENT_MARK + BLANK + COPYRIGHT_HEADER + NEW_LINE_MARK
     for lino, line in enumerate(lines):
-        if lino == 0 or lino == 1 or lino == len(lines) - 1:
+        if lino in [0, 1, len(lines) - 1]:
             continue
-        if len(line) == 0:
-            BLANK = ""
-        else:
-            BLANK = " "
+        BLANK = "" if len(line) == 0 else " "
         ans += LANG_COMMENT_MARK + BLANK + line + NEW_LINE_MARK
 
     return ans + "\n"
@@ -90,7 +83,6 @@ def main(argv=None):
     parser.add_argument('filenames', nargs='*', help='Filenames to check')
     args = parser.parse_args(argv)
 
-    retv = 0
     for filename in args.filenames:
         fd = io.open(filename, encoding="utf-8")
         first_line = fd.readline()
@@ -132,7 +124,7 @@ def main(argv=None):
         with io.open(filename, 'w', encoding='utf8') as output_file:
             output_file.write(new_contents)
 
-    return retv
+    return 0
 
 
 if __name__ == '__main__':

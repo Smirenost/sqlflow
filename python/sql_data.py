@@ -52,7 +52,7 @@ the label field name to the label data column.
     d = dict(zip(f, c))  # dict from field names to columns.
     label = d.pop(label)
     if features is not None:
-        d = dict((k, d[k]) for k in features)
+        d = {k: d[k] for k in features}
     return d, label
 
 

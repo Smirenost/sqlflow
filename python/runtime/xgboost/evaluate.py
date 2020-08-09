@@ -59,10 +59,7 @@ def evaluate(datasource,
              model_params=None,
              transform_fn=None,
              feature_column_code=""):
-    if not is_pai:
-        conn = db.connect_with_data_source(datasource)
-    else:
-        conn = None
+    conn = db.connect_with_data_source(datasource) if not is_pai else None
     dpred = xgb_dataset(datasource,
                         'predict.txt',
                         select,

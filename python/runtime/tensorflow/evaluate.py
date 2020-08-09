@@ -68,8 +68,8 @@ def evaluate(datasource,
 
     # write result metrics to a table
     conn = connect_with_data_source(datasource)
-    driver = conn.driver
     if result_table:
+        driver = conn.driver
         metric_name_list = ["loss"] + validation_metrics
         write_result_metrics(result_metrics,
                              metric_name_list,
@@ -85,8 +85,7 @@ def evaluate(datasource,
 def estimator_evaluate(estimator, eval_dataset, validation_metrics):
     result = estimator.evaluate(eval_dataset)
     avg_loss = result["average_loss"]
-    result_metrics = dict()
-    result_metrics["loss"] = avg_loss
+    result_metrics = {"loss": avg_loss}
     for m in validation_metrics:
         val = result.get(m.lower())
         if val:

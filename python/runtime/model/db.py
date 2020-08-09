@@ -58,9 +58,9 @@ def write_with_generator(datasource, table, gen):
     conn = connect_with_data_source(datasource)
     _drop_table_if_exists(conn, table)
     _create_table(conn, table)
-    idx = 0
-
     with buffered_db_writer(conn.driver, conn, table, ["id", "block"]) as w:
+        idx = 0
+
         for d in gen():
             block = base64.b64encode(d)
             row = [idx, block]

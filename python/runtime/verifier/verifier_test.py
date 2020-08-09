@@ -20,11 +20,7 @@ from runtime.verifier import fetch_samples, verify_column_name_and_type
 
 
 def length(iterable):
-    n = 0
-    for _ in iterable:
-        n += 1
-
-    return n
+    return sum(1 for _ in iterable)
 
 
 class TestFetchSamples(unittest.TestCase):

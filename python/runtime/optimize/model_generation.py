@@ -344,10 +344,11 @@ def get_bracket_depth(idx, left_bracket_indices, right_bracket_indices):
     Raises:
         ValueError if idx is not inside any bracket.
     """
-    depth = -1
-    for i, left_idx in enumerate(left_bracket_indices):
-        if idx >= left_idx and idx <= right_bracket_indices[i]:
-            depth += 1
+    depth = -1 + sum(
+        1
+        for i, left_idx in enumerate(left_bracket_indices)
+        if idx >= left_idx and idx <= right_bracket_indices[i]
+    )
 
     if depth < 0:
         raise ValueError("cannot find bracket depth")
@@ -603,11 +604,9 @@ def generate_objective_or_constraint_expr(columns, tokens, variables,
         result_value_name=result_value_name,
         group_by=group_by)
 
-    has_aggregation_func = False
-    for token in tokens:
-        if try_convert_to_aggregation_function(token):
-            has_aggregation_func = True
-            break
+    has_aggregation_func = any(
+        try_convert_to_aggregation_function(token) for token in tokens
+    )
 
     if has_aggregation_func:
         expr, rang, vars = generate_objective_or_aggregated_constraint_expr(

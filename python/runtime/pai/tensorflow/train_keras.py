@@ -29,11 +29,7 @@ def keras_train_and_save(estimator, model_params, save, FLAGS,
     classifier, has_none_optimizer = keras_compile(estimator, model_params,
                                                    save, metric_names)
     train_dataset = train_dataset_fn()
-    if val_dataset_fn is not None:
-        validate_dataset = val_dataset_fn()
-    else:
-        validate_dataset = None
-
+    validate_dataset = val_dataset_fn() if val_dataset_fn is not None else None
     if load_pretrained_model:
         # FIXME(typhoonzero): copied from runtime.tensorflow.train_keras
         inputs, targets = next(iter(train_dataset.take(1)))

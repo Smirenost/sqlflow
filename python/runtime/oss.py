@@ -45,8 +45,7 @@ def get_bucket(name, ak=None, sk=None, endpoint=None):
         raise ValueError(
             "must configure SQLFLOW_OSS_MODEL_ENDPOINT when submitting to PAI")
     auth = oss2.Auth(ak, sk)
-    bucket = oss2.Bucket(auth, endpoint, name)
-    return bucket
+    return oss2.Bucket(auth, endpoint, name)
 
 
 def copyfileobj(source, dest, ak, sk, endpoint, bucket_name):
@@ -62,8 +61,7 @@ def copyfileobj(source, dest, ak, sk, endpoint, bucket_name):
 def get_oss_path_from_uri(oss_model_dir, file_name):
     # oss_model_dir is of format: oss://bucket/path/to/dir/
     assert (oss_model_dir.startswith("oss://"))
-    oss_file_path = "/".join([oss_model_dir.rstrip("/"), file_name])
-    return oss_file_path
+    return "/".join([oss_model_dir.rstrip("/"), file_name])
 
 
 def mkdir(bucket, oss_dir):

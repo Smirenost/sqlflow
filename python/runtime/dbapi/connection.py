@@ -31,8 +31,7 @@ class ResultSet(object):
         fetch_size = 128
         while True:
             rows = self._fetch(fetch_size) or []
-            for r in rows:
-                yield r
+            yield from rows
             if len(rows) < fetch_size:
                 break
 

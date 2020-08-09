@@ -206,12 +206,7 @@ def save_solved_result_in_db(solved_result, data_frame, variables,
     """
     column_names = []
     for col in data_frame.columns:
-        found = False
-        for var in variables:
-            if var.lower() == col.lower():
-                found = True
-                break
-
+        found = any(var.lower() == col.lower() for var in variables)
         if found:
             column_names.append(col)
 

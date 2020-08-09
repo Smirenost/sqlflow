@@ -292,4 +292,4 @@ class ComposedColumnTransformer(BaseColumnTransformer):
             column._set_feature_column_names(names)
 
     def __call__(self, inputs):
-        return tuple([column(inputs) for column in self.columns])
+        return tuple(column(inputs) for column in self.columns)
