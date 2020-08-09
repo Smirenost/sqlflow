@@ -20,27 +20,17 @@ from runtime.diagnostics import SQLFlowDiagnostic
 def _create_table(conn, table):
     if conn.driver == "mysql":
         stmt = "CREATE TABLE IF NOT EXISTS {0} (id INT, block TEXT,\
-        PRIMARY KEY (id))".format(
-            table
-        )
+        PRIMARY KEY (id))".format(table)
     elif conn.driver == "hive":
         stmt = 'CREATE TABLE IF NOT EXISTS {0} (id INT, block STRING) ROW\
             FORMAT DELIMITED FIELDS TERMINATED BY "\\001" \
-                STORED AS TEXTFILE'.format(
-            table
-        )
+                STORED AS TEXTFILE'.format(table)
     elif conn.driver == "maxcompute":
         stmt = "CREATE TABLE IF NOT EXISTS {0} (id INT,\
-            block STRING)".format(
-            table
-        )
+            block STRING)".format(table)
     else:
-        raise SQLFlowDiagnostic(
-            "unsupported driver {0} on creating\
-            table.".format(
-                conn.driver
-            )
-        )
+        raise SQLFlowDiagnostic("unsupported driver {0} on creating\
+            table.".format(conn.driver))
 
     cursor = conn.cursor()
     cursor.execute(stmt)

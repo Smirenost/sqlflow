@@ -26,23 +26,23 @@ from sklearn.datasets import load_svmlight_files
 
 
 def xgb_dataset(
-    datasource,
-    fn,
-    dataset_sql,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    is_pai=False,
-    pai_table="",
-    pai_single_file=False,
-    cache=False,
-    batch_size=None,
-    epoch=1,
-    rank=0,
-    nworkers=1,
-    transform_fn=None,
-    feature_column_code="",
-    raw_data_dir=None,
+        datasource,
+        fn,
+        dataset_sql,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        is_pai=False,
+        pai_table="",
+        pai_single_file=False,
+        cache=False,
+        batch_size=None,
+        epoch=1,
+        rank=0,
+        nworkers=1,
+        transform_fn=None,
+        feature_column_code="",
+        raw_data_dir=None,
 ):
     if raw_data_dir:
         # raw_data_dir is needed when predicting. Because we
@@ -93,9 +93,8 @@ def xgb_dataset(
         )
 
         while written_rows > 0:
-            yield load_dmatrix(
-                "{0}#{0}.cache".format(step_file_name) if cache else step_file_name
-            )
+            yield load_dmatrix("{0}#{0}.cache".format(step_file_name)
+                               if cache else step_file_name)
             os.remove(step_file_name)
 
             step += 1
@@ -113,15 +112,15 @@ def xgb_dataset(
 
 
 def dump_dmatrix(
-    filename,
-    generator,
-    feature_column_names,
-    feature_metas,
-    has_label,
-    selected_cols,
-    batch_size=None,
-    transform_fn=None,
-    raw_data_dir=None,
+        filename,
+        generator,
+        feature_column_names,
+        feature_metas,
+        has_label,
+        selected_cols,
+        batch_size=None,
+        transform_fn=None,
+        raw_data_dir=None,
 ):
     # TODO(yancey1989): generate group and weight text file if necessary
     row_id = 0
@@ -134,9 +133,9 @@ def dump_dmatrix(
 
     with open(filename, "a") as f:
         for row, label in generator:
-            features = db.read_features_from_row(
-                row, selected_cols, feature_column_names, feature_metas
-            )
+            features = db.read_features_from_row(row, selected_cols,
+                                                 feature_column_names,
+                                                 feature_metas)
 
             if raw_data_fid is not None:
                 raw_data_fid.write("/".join([str(r) for r in row]) + "\n")
@@ -150,13 +149,11 @@ def dump_dmatrix(
                 if len(v) == 1:  # dense feature
                     value = v[0]
                     if isinstance(value, np.ndarray):
-                        value = value.reshape((-1,))
-                        row_data.extend(
-                            [
-                                "{}:{}".format(i + offset, item)
-                                for i, item in enumerate(value)
-                            ]
-                        )
+                        value = value.reshape((-1, ))
+                        row_data.extend([
+                            "{}:{}".format(i + offset, item)
+                            for i, item in enumerate(value)
+                        ])
                         offset += value.size
                     else:
                         row_data.append("{}:{}".format(offset, value))
@@ -165,12 +162,10 @@ def dump_dmatrix(
                     indices = v[0]
                     value = v[1].reshape((-1))
                     dense_size = np.prod(v[2])
-                    row_data.extend(
-                        [
-                            "{}:{}".format(i + offset, item)
-                            for i, item in six.moves.zip(indices, value)
-                        ]
-                    )
+                    row_data.extend([
+                        "{}:{}".format(i + offset, item)
+                        for i, item in six.moves.zip(indices, value)
+                    ])
                     offset += dense_size
 
             if has_label:
@@ -215,7 +210,7 @@ def load_dmatrix(filename):
     # load_svmlight_file(s). So we remove the suffix "#..."
     # here before loading the data using load_svmlight_file(s).
     if "#" in filename:
-        filename = filename[0 : filename.index("#")]
+        filename = filename[0:filename.index("#")]
 
     if os.path.isdir(filename):
         files = [os.path.join(filename, f) for f in os.listdir(filename)]
@@ -236,36 +231,32 @@ def get_pai_table_slice_count(table, nworkers, batch_size):
 
     row_cnt = db.get_pai_table_row_num(table)
 
-    assert row_cnt >= nworkers, (
-        "Data number {} should not "
-        "less than worker number {}".format(row_cnt, nworkers)
-    )
+    assert row_cnt >= nworkers, ("Data number {} should not "
+                                 "less than worker number {}".format(
+                                     row_cnt, nworkers))
 
     slice_num_per_worker = max(int(row_cnt / (nworkers * batch_size)), 1)
     slice_count = slice_num_per_worker * nworkers
 
-    print(
-        "row_cnt = {}, slice_count = {}, nworkers = {}".format(
-            row_cnt, slice_count, nworkers
-        )
-    )
+    print("row_cnt = {}, slice_count = {}, nworkers = {}".format(
+        row_cnt, slice_count, nworkers))
 
     return slice_count
 
 
 def pai_dataset(
-    filename,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    pai_table,
-    single_file,
-    cache,
-    rank=0,
-    nworkers=1,
-    batch_size=None,
-    feature_column_code="",
-    raw_data_dir=None,
+        filename,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        pai_table,
+        single_file,
+        cache,
+        rank=0,
+        nworkers=1,
+        batch_size=None,
+        feature_column_code="",
+        raw_data_dir=None,
 ):
     from subprocess import Popen, PIPE
     from multiprocessing.dummy import Pool  # ThreadPool
@@ -288,22 +279,21 @@ def pai_dataset(
     complete_queue = queue.Queue()
 
     def thread_worker(slice_id):
-        p = Popen("{} -m {}".format(sys.executable, __name__), shell=True, stdin=PIPE)
+        p = Popen("{} -m {}".format(sys.executable, __name__),
+                  shell=True,
+                  stdin=PIPE)
         p.communicate(
-            json.dumps(
-                [
-                    dname,
-                    feature_metas,
-                    feature_column_names,
-                    label_meta,
-                    pai_table,
-                    slice_id,
-                    slice_count,
-                    feature_column_code,
-                    raw_data_dir,
-                ]
-            )
-        )
+            json.dumps([
+                dname,
+                feature_metas,
+                feature_column_names,
+                label_meta,
+                pai_table,
+                slice_id,
+                slice_count,
+                feature_column_code,
+                raw_data_dir,
+            ]))
 
         assert p.returncode == 0, "The subprocess raises error when reading data"
         complete_queue.put(slice_id)
@@ -311,7 +301,7 @@ def pai_dataset(
     slice_id = rank
     slice_total = 0
     while slice_id < slice_count:
-        pool.apply_async(thread_worker, (slice_id,))
+        pool.apply_async(thread_worker, (slice_id, ))
         slice_id += nworkers
         slice_total += 1
 
@@ -327,11 +317,8 @@ def pai_dataset(
             downloaded_file = "./{}/{}.txt".format(dname, slice_id)
             # ignore empty files or the xgb.DMatrix will throw error.
             if Path(downloaded_file).stat().st_size > 0:
-                yield load_dmatrix(
-                    "{0}#{0}.cache".format(downloaded_file)
-                    if cache
-                    else downloaded_file
-                )
+                yield load_dmatrix("{0}#{0}.cache".format(downloaded_file)
+                                   if cache else downloaded_file)
                 os.unlink(downloaded_file)
 
     if single_file:
@@ -347,34 +334,35 @@ def pai_dataset(
         if raw_data_dir:
             merge_files(raw_data_dir, "{}.raw".format(filename))
 
-        yield load_dmatrix("{0}#{0}.cache".format(filename) if cache else filename)
+        yield load_dmatrix(
+            "{0}#{0}.cache".format(filename) if cache else filename)
 
     pool.close()
     pool.join()
 
 
 def pai_download_table_data_worker(
-    dname,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    pai_table,
-    slice_id,
-    slice_count,
-    feature_column_code,
-    raw_data_dir,
+        dname,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        pai_table,
+        slice_id,
+        slice_count,
+        feature_column_code,
+        raw_data_dir,
 ):
     import runtime.xgboost as xgboost_extended
 
     feature_column_transformers = eval("[{}]".format(feature_column_code))
     transform_fn = xgboost_extended.feature_column.ComposedColumnTransformer(
-        feature_column_names, *feature_column_transformers
-    )
+        feature_column_names, *feature_column_transformers)
 
     label_column_name = label_meta["feature_name"] if label_meta else None
-    gen = db.pai_maxcompute_db_generator(
-        pai_table, label_column_name, slice_id=slice_id, slice_count=slice_count
-    )()
+    gen = db.pai_maxcompute_db_generator(pai_table,
+                                         label_column_name,
+                                         slice_id=slice_id,
+                                         slice_count=slice_count)()
     selected_cols = db.pai_selected_cols(pai_table)
     filename = "{}/{}.txt".format(dname, slice_id)
     dump_dmatrix(

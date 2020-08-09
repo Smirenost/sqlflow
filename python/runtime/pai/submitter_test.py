@@ -26,13 +26,10 @@ class SubmitterTestCase(TestCase):
         self.assertEqual("oss://sqlflow-models/user_a/model", url)
 
     def test_get_datasource_dsn(self):
-        ds = (
-            "odps://access_id:access_key@service.com/api?"
-            "curr_project=test_ci&scheme=http"
-        )
-        expected_dsn = (
-            "access_id:access_key@service.com/api?" "curr_project=test_ci&scheme=http"
-        )
+        ds = ("odps://access_id:access_key@service.com/api?"
+              "curr_project=test_ci&scheme=http")
+        expected_dsn = ("access_id:access_key@service.com/api?"
+                        "curr_project=test_ci&scheme=http")
         dsn = submitter.get_datasource_dsn(ds)
         self.assertEqual(expected_dsn, dsn)
         project = "test_ci"
@@ -40,7 +37,8 @@ class SubmitterTestCase(TestCase):
 
     def test_get_pai_tf_cmd(self):
         conf = get_cluster_config({})
-        os.environ["SQLFLOW_OSS_CHECKPOINT_CONFIG"] = '{"arn":"arn", "host":"host"}'
+        os.environ[
+            "SQLFLOW_OSS_CHECKPOINT_CONFIG"] = '{"arn":"arn", "host":"host"}'
         cmd = submitter.get_pai_tf_cmd(
             conf,
             "job.tar.gz",
@@ -64,8 +62,7 @@ class SubmitterTestCase(TestCase):
             "-DhyperParameters='params.txt' "
             "-DcheckpointDir='oss://sqlflow-models/user1/my_dnn_model/?"
             "role_arn=arn/pai2osstestproject&host=host' "
-            "-DgpuRequired='0'"
-        )
+            "-DgpuRequired='0'")
         self.assertEqual(expected, cmd)
 
         conf = get_cluster_config({"train.num_workers": 5})
@@ -93,8 +90,7 @@ class SubmitterTestCase(TestCase):
             "-DcheckpointDir='oss://sqlflow-models/user1/my_dnn_model/?"
             "role_arn=arn/pai2osstestproject&host=host' "
             r"""-Dcluster="{\"ps\": {\"count\": 1, \"cpu\": 200, \"gpu\": 0}"""
-            r''', \"worker\": {\"count\": 5, \"cpu\": 400, \"gpu\": 0}}"'''
-        )
+            r''', \"worker\": {\"count\": 5, \"cpu\": 400, \"gpu\": 0}}"''')
         self.assertEqual(expected, cmd)
         del os.environ["SQLFLOW_OSS_CHECKPOINT_CONFIG"]
 
@@ -290,7 +286,8 @@ INTO e2etest_pai_dnn;""",
             "",
             {
                 "excluded_columns": "class",
-                "idx_table_name": "alifin_jtest_dev.e2e_test_kmeans_output_idx",
+                "idx_table_name":
+                "alifin_jtest_dev.e2e_test_kmeans_output_idx",
             },
             "e2e_test_kmeans",
             "",
@@ -303,7 +300,9 @@ INTO e2etest_pai_dnn;""",
             "RandomForests",
             "SELECT * FROM alifin_jtest_dev.sqlflow_iris_train",
             "",
-            {"tree_num": 3,},
+            {
+                "tree_num": 3,
+            },
             "e2e_test_random_forest",
             "",
             feature_column_names=iris_feature_column_names,

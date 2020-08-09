@@ -43,8 +43,7 @@ def assert_are_valid_tokens(columns, tokens, result_value_name, group_by=None):
 
     if group_by:
         assert group_by.lower() in valid_columns, (
-            "GROUP BY column %s not found" % group_by
-        )
+            "GROUP BY column %s not found" % group_by)
 
     assert tokens, "tokens should not be empty"
 
@@ -59,9 +58,8 @@ def assert_are_valid_tokens(columns, tokens, result_value_name, group_by=None):
         if IDENTIFIER_REGEX.fullmatch(token) is None:
             continue
 
-        assert find_next_non_blank_token(tokens, i + 1) == "(", (
-            "invalid token %s" % token
-        )
+        assert find_next_non_blank_token(
+            tokens, i + 1) == "(", ("invalid token %s" % token)
 
 
 def generate_unique_result_value_name(columns, result_value_name, variables):
@@ -84,7 +82,8 @@ def generate_unique_result_value_name(columns, result_value_name, variables):
     for v in variables:
         assert v in columns_lower, "cannot find variable %s column" % v
 
-    assert len(set(variables)) == len(variables), "duplicate variables are not allowed"
+    assert len(set(variables)) == len(
+        variables), "duplicate variables are not allowed"
 
     if len(variables) > 1 or result_value_name.lower() != variables[0]:
         assert (
@@ -104,7 +103,8 @@ def generate_unique_result_value_name(columns, result_value_name, variables):
             return new_name
 
 
-def update_by_column_names(columns, tokens, variables, result_value_name, group_by):
+def update_by_column_names(columns, tokens, variables, result_value_name,
+                           group_by):
     """
     Update tokens, variables, result_value_name and group_by by the columns.
     If any string inside tokens, variables, result_value_name and group_by
@@ -142,8 +142,9 @@ def update_by_column_names(columns, tokens, variables, result_value_name, group_
     result_value_name, _ = to_column_name_or_return_itself(result_value_name)
 
     new_result_value_name = generate_unique_result_value_name(
-        columns=columns, result_value_name=result_value_name, variables=variables
-    )
+        columns=columns,
+        result_value_name=result_value_name,
+        variables=variables)
 
     tokens = list(tokens)
     for i, token in enumerate(tokens):
@@ -156,7 +157,8 @@ def update_by_column_names(columns, tokens, variables, result_value_name, group_
     if group_by:
         group_by, ok = to_column_name_or_return_itself(group_by)
         if not ok:
-            raise ValueError("cannot find GROUP BY column %s in table" % group_by)
+            raise ValueError("cannot find GROUP BY column %s in table" %
+                             group_by)
 
     return tokens, variables, new_result_value_name, group_by
 
@@ -198,7 +200,8 @@ def try_convert_comparision_token(token):
     return COMPARISION_TOKENS.get(token, None)
 
 
-def generate_group_by_range_and_index_str(group_by, data_str, value_str, index_str):
+def generate_group_by_range_and_index_str(group_by, data_str, value_str,
+                                          index_str):
     """
     Generate the range and index string for GROUP BY expression.
 
@@ -320,7 +323,8 @@ def find_matched_aggregation_function_brackets(tokens, i):
 
     agg_left_bracket_indices = []
     agg_right_bracket_indices = []
-    for left_idx, right_idx in zip(left_bracket_indices, right_bracket_indices):
+    for left_idx, right_idx in zip(left_bracket_indices,
+                                   right_bracket_indices):
         token = find_prev_non_blank_token(tokens, left_idx - 1)
         if try_convert_to_aggregation_function(token):
             agg_left_bracket_indices.append(left_idx)
@@ -345,11 +349,8 @@ def get_bracket_depth(idx, left_bracket_indices, right_bracket_indices):
     Raises:
         ValueError if idx is not inside any bracket.
     """
-    depth = -1 + sum(
-        1
-        for i, left_idx in enumerate(left_bracket_indices)
-        if idx >= left_idx and idx <= right_bracket_indices[i]
-    )
+    depth = -1 + sum(1 for i, left_idx in enumerate(left_bracket_indices)
+                     if idx >= left_idx and idx <= right_bracket_indices[i])
 
     if depth < 0:
         raise ValueError("cannot find bracket depth")
@@ -357,9 +358,9 @@ def get_bracket_depth(idx, left_bracket_indices, right_bracket_indices):
     return depth
 
 
-def generate_token_in_non_aggregation_expression(
-    token, columns, result_value_name, group_by, data_str, index_str
-):
+def generate_token_in_non_aggregation_expression(token, columns,
+                                                 result_value_name, group_by,
+                                                 data_str, index_str):
     """
     Convert the token which is inside the non aggregation part of an
     aggregation expression to be a token that can be accepted by the
@@ -403,9 +404,8 @@ def generate_token_in_non_aggregation_expression(
     return token
 
 
-def generate_token_in_aggregation_expression(
-    token, columns, result_value_name, variable_str, data_str, depth
-):
+def generate_token_in_aggregation_expression(token, columns, result_value_name,
+                                             variable_str, data_str, depth):
     """
     Convert the token which is inside the aggregation part of an aggregation
     expression to be a token that can be accepted by the Pyomo model or FSL
@@ -439,9 +439,9 @@ def generate_token_in_aggregation_expression(
     return token
 
 
-def generate_non_aggregation_constraint_expr(
-    tokens, columns, result_value_name, variable_str, data_str, index_str
-):
+def generate_non_aggregation_constraint_expr(tokens, columns,
+                                             result_value_name, variable_str,
+                                             data_str, index_str):
     """
     Generate the model expression for the non aggregated constraint expression.
 
@@ -478,14 +478,14 @@ def generate_non_aggregation_constraint_expr(
 
 
 def generate_objective_or_aggregated_constraint_expr(
-    tokens,
-    group_by,
-    result_value_name,
-    columns,
-    variable_str,
-    data_str,
-    value_str,
-    index_str,
+        tokens,
+        group_by,
+        result_value_name,
+        columns,
+        variable_str,
+        data_str,
+        value_str,
+        index_str,
 ):
     """
     Generate the model expression for the objective or aggregated constraint
@@ -508,8 +508,10 @@ def generate_objective_or_aggregated_constraint_expr(
     """
 
     outer_range, inner_range, vars = generate_group_by_range_and_index_str(
-        group_by=group_by, data_str=data_str, value_str=value_str, index_str=index_str
-    )
+        group_by=group_by,
+        data_str=data_str,
+        value_str=value_str,
+        index_str=index_str)
 
     idx = 0
     result_tokens = []
@@ -542,7 +544,8 @@ def generate_objective_or_aggregated_constraint_expr(
             continue
 
         while idx <= right_bracket_idx:
-            depth = get_bracket_depth(idx, left_bracket_indices, right_bracket_indices)
+            depth = get_bracket_depth(idx, left_bracket_indices,
+                                      right_bracket_indices)
 
             if tokens[idx] == "(":
                 result_tokens.append(tokens[idx])
@@ -588,15 +591,15 @@ def generate_objective_or_aggregated_constraint_expr(
 
 
 def generate_objective_or_constraint_expr(
-    columns,
-    tokens,
-    variables,
-    result_value_name,
-    group_by,
-    variable_str,
-    data_str,
-    value_str,
-    index_str,
+        columns,
+        tokens,
+        variables,
+        result_value_name,
+        group_by,
+        variable_str,
+        data_str,
+        value_str,
+        index_str,
 ):
     """
     Generate the model expression for the objective or constraint expression.
@@ -626,8 +629,7 @@ def generate_objective_or_constraint_expr(
     )
 
     has_aggregation_func = any(
-        try_convert_to_aggregation_function(token) for token in tokens
-    )
+        try_convert_to_aggregation_function(token) for token in tokens)
 
     if has_aggregation_func:
         expr, rang, vars = generate_objective_or_aggregated_constraint_expr(
@@ -642,9 +644,8 @@ def generate_objective_or_constraint_expr(
         )
     else:
         if group_by:
-            raise ValueError(
-                "GROUP BY must be used with aggregation function " "like SUM together"
-            )
+            raise ValueError("GROUP BY must be used with aggregation function "
+                             "like SUM together")
 
         expr, rang, vars = generate_non_aggregation_constraint_expr(
             tokens=tokens,
@@ -659,15 +660,15 @@ def generate_objective_or_constraint_expr(
 
 
 def generate_objective_and_constraint_expr(
-    columns,
-    objective,
-    constraints,
-    variables,
-    result_value_name,
-    variable_str,
-    data_str,
-    value_str="__value",
-    index_str="__index",
+        columns,
+        objective,
+        constraints,
+        variables,
+        result_value_name,
+        variable_str,
+        data_str,
+        value_str="__value",
+        index_str="__index",
 ):
     """
     Generate the model expressions for the objective and constraint
@@ -695,9 +696,9 @@ def generate_objective_and_constraint_expr(
     constraint_exprs = []
 
     if objective:
-        assert_are_valid_tokens(
-            columns=columns, tokens=objective, result_value_name=result_value_name
-        )
+        assert_are_valid_tokens(columns=columns,
+                                tokens=objective,
+                                result_value_name=result_value_name)
         obj_expr, for_range, iter_vars = generate_objective_or_constraint_expr(
             columns=columns,
             tokens=objective,

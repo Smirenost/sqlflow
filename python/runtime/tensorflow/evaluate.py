@@ -24,24 +24,24 @@ from runtime.tensorflow.set_log_level import set_log_level
 
 
 def evaluate(
-    datasource,
-    estimator_string,
-    select,
-    result_table,
-    feature_columns,
-    feature_column_names,
-    feature_metas={},
-    label_meta={},
-    model_params={},
-    validation_metrics=["Accuracy"],
-    save="",
-    batch_size=1,
-    validation_steps=None,
-    verbose=0,
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
+        datasource,
+        estimator_string,
+        select,
+        result_table,
+        feature_columns,
+        feature_column_names,
+        feature_metas={},
+        label_meta={},
+        model_params={},
+        validation_metrics=["Accuracy"],
+        save="",
+        batch_size=1,
+        validation_steps=None,
+        verbose=0,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
 ):
     estimator_cls = import_model(estimator_string)
     is_estimator = is_tf_estimator(estimator_cls)
@@ -61,13 +61,14 @@ def evaluate(
     if is_estimator:
         model_params["model_dir"] = save
         estimator = estimator_cls(**model_params)
-        result_metrics = estimator_evaluate(estimator, eval_dataset, validation_metrics)
+        result_metrics = estimator_evaluate(estimator, eval_dataset,
+                                            validation_metrics)
     else:
-        keras_model = init_model_with_feature_column(estimator_cls, model_params)
+        keras_model = init_model_with_feature_column(estimator_cls,
+                                                     model_params)
         keras_model_pkg = sys.modules[estimator_cls.__module__]
-        result_metrics = keras_evaluate(
-            keras_model, eval_dataset, save, keras_model_pkg, validation_metrics
-        )
+        result_metrics = keras_evaluate(keras_model, eval_dataset, save,
+                                        keras_model_pkg, validation_metrics)
 
     # write result metrics to a table
     conn = connect_with_data_source(datasource)
@@ -101,16 +102,14 @@ def estimator_evaluate(estimator, eval_dataset, validation_metrics):
             # estimator's result dict, fill None.
             print(
                 "specified metric %s not calculated by estimator, fill empty "
-                "value." % m
-            )
+                "value." % m)
             result_metrics[m] = None
 
     return result_metrics
 
 
-def keras_evaluate(
-    keras_model, eval_dataset_fn, save, keras_model_pkg, validation_metrics
-):
+def keras_evaluate(keras_model, eval_dataset_fn, save, keras_model_pkg,
+                   validation_metrics):
     model_metrics = []
     if hasattr(keras_model_pkg, "eval_metrics_fn"):
         metrics_functions = keras_model_pkg.eval_metrics_fn()
@@ -141,7 +140,8 @@ def keras_evaluate(
     eval_dataset_x = eval_dataset.map(get_features)
 
     if has_custom_evaluate_func:
-        result = keras_model.sqlflow_evaluate_loop(eval_dataset, validation_metrics)
+        result = keras_model.sqlflow_evaluate_loop(eval_dataset,
+                                                   validation_metrics)
     else:
         one_batch = next(iter(eval_dataset_x))
         # NOTE: must run predict one batch to initialize parameters
@@ -158,29 +158,29 @@ def keras_evaluate(
 
 
 def write_result_metrics(
-    result_metrics,
-    metric_name_list,
-    result_table,
-    driver,
-    conn,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
+        result_metrics,
+        metric_name_list,
+        result_table,
+        driver,
+        conn,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
 ):
     # NOTE: assume that the result table is already created with columns:
     # loss | metric_names ...
     column_names = metric_name_list
     with buffered_db_writer(
-        driver,
-        conn,
-        result_table,
-        column_names,
-        100,
-        hdfs_namenode_addr,
-        hive_location,
-        hdfs_user,
-        hdfs_pass,
+            driver,
+            conn,
+            result_table,
+            column_names,
+            100,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
     ) as w:
         row = []
         for key in metric_name_list:

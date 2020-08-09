@@ -38,22 +38,22 @@ else:
 
 
 def keras_predict(
-    estimator,
-    model_params,
-    save,
-    result_table,
-    feature_column_names,
-    feature_metas,
-    train_label_name,
-    result_col_name,
-    driver,
-    conn,
-    predict_generator,
-    selected_cols,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
+        estimator,
+        model_params,
+        save,
+        result_table,
+        feature_column_names,
+        feature_metas,
+        train_label_name,
+        result_col_name,
+        driver,
+        conn,
+        predict_generator,
+        selected_cols,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
 ):
 
     classifier = init_model_with_feature_column(estimator, model_params)
@@ -66,10 +66,10 @@ def keras_predict(
                 feature_types.append((tf.int64, tf.int32, tf.int64))
             else:
                 feature_types.append(get_dtype(feature_metas[name]["dtype"]))
-        tf_gen = tf_generator(
-            predict_generator, selected_cols, feature_column_names, feature_metas
-        )
-        dataset = tf.data.Dataset.from_generator(tf_gen, (tuple(feature_types),))
+        tf_gen = tf_generator(predict_generator, selected_cols,
+                              feature_column_names, feature_metas)
+        dataset = tf.data.Dataset.from_generator(tf_gen,
+                                                 (tuple(feature_types), ))
         ds_mapper = functools.partial(
             parse_sparse_feature_predict,
             feature_column_names=feature_column_names,
@@ -102,15 +102,15 @@ def keras_predict(
     column_names.append(result_col_name)
 
     with db.buffered_db_writer(
-        driver,
-        conn,
-        result_table,
-        column_names,
-        100,
-        hdfs_namenode_addr,
-        hive_location,
-        hdfs_user,
-        hdfs_pass,
+            driver,
+            conn,
+            result_table,
+            column_names,
+            100,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
     ) as w:
         for features in pred_dataset:
             if hasattr(classifier, "sqlflow_predict_one"):
@@ -162,24 +162,24 @@ def write_cols_from_selected(result_col_name, selected_cols):
 
 
 def estimator_predict(
-    estimator,
-    model_params,
-    save,
-    result_table,
-    feature_column_names,
-    feature_column_names_map,
-    feature_columns,
-    feature_metas,
-    train_label_name,
-    result_col_name,
-    driver,
-    conn,
-    predict_generator,
-    selected_cols,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
+        estimator,
+        model_params,
+        save,
+        result_table,
+        feature_column_names,
+        feature_column_names_map,
+        feature_columns,
+        feature_metas,
+        train_label_name,
+        result_col_name,
+        driver,
+        conn,
+        predict_generator,
+        selected_cols,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
 ):
     write_cols = selected_cols[:]
     try:
@@ -210,12 +210,10 @@ def estimator_predict(
                 values = x[0][i].flatten()
             if dtype_str in ["float32", "float64"]:
                 example.features.feature[feature_name].float_list.value.extend(
-                    list(values)
-                )
+                    list(values))
             elif dtype_str in ["int32", "int64"]:
                 example.features.feature[feature_name].int64_list.value.extend(
-                    list(values)
-                )
+                    list(values))
         else:
             if "feature_columns" in feature_columns:
                 idx = feature_column_names.index(feature_name)
@@ -225,62 +223,60 @@ def estimator_predict(
                 # linear_feature_columns param.
                 idx = -1
                 try:
-                    idx = feature_column_names_map["dnn_feature_columns"].index(
-                        feature_name
-                    )
+                    idx = feature_column_names_map[
+                        "dnn_feature_columns"].index(feature_name)
                     fc = feature_columns["dnn_feature_columns"][idx]
                 except:  # noqa: E722
                     try:
-                        idx = feature_column_names_map["linear_feature_columns"].index(
-                            feature_name
-                        )
+                        idx = feature_column_names_map[
+                            "linear_feature_columns"].index(feature_name)
                         fc = feature_columns["linear_feature_columns"][idx]
                     except:  # noqa: E722
                         pass
                 if idx == -1:
-                    raise ValueError("can not found feature %s in all feature columns")
+                    raise ValueError(
+                        "can not found feature %s in all feature columns")
             if dtype_str in ["float32", "float64"]:
                 # need to pass a tuple(float, )
                 example.features.feature[feature_name].float_list.value.extend(
-                    (float(x[0][i][0]),)
-                )
+                    (float(x[0][i][0]), ))
             elif dtype_str in ["int32", "int64"]:
                 numeric_type = type(tf.feature_column.numeric_column("tmp"))
                 if type(fc) == numeric_type:
-                    example.features.feature[feature_name].float_list.value.extend(
-                        (float(x[0][i][0]),)
-                    )
+                    example.features.feature[
+                        feature_name].float_list.value.extend(
+                            (float(x[0][i][0]), ))
                 else:
-                    example.features.feature[feature_name].int64_list.value.extend(
-                        (int(x[0][i][0]),)
-                    )
+                    example.features.feature[
+                        feature_name].int64_list.value.extend(
+                            (int(x[0][i][0]), ))
             elif dtype_str == "string":
-                example.features.feature[feature_name].bytes_list.value.extend(x[0][i])
+                example.features.feature[feature_name].bytes_list.value.extend(
+                    x[0][i])
 
     def predict(x):
         example = tf.train.Example()
         for i in range(len(feature_column_names)):
             add_to_example(example, x, i)
         return imported.signatures["predict"](
-            examples=tf.constant([example.SerializeToString()])
-        )
+            examples=tf.constant([example.SerializeToString()]))
 
     with db.buffered_db_writer(
-        driver,
-        conn,
-        result_table,
-        write_cols,
-        100,
-        hdfs_namenode_addr,
-        hive_location,
-        hdfs_user,
-        hdfs_pass,
+            driver,
+            conn,
+            result_table,
+            write_cols,
+            100,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
     ) as w:
         for row, _ in predict_generator():
-            features = db.read_features_from_row(
-                row, selected_cols, feature_column_names, feature_metas
-            )
-            result = predict((features,))
+            features = db.read_features_from_row(row, selected_cols,
+                                                 feature_column_names,
+                                                 feature_metas)
+            result = predict((features, ))
             if train_label_index != -1 and len(row) > train_label_index:
                 del row[train_label_index]
             if "class_ids" in result:
@@ -292,23 +288,23 @@ def estimator_predict(
 
 
 def pred(
-    datasource,
-    estimator_string,
-    select,
-    result_table,
-    feature_columns,
-    feature_column_names,
-    feature_column_names_map,
-    train_label_name,
-    result_col_name,
-    feature_metas={},
-    model_params={},
-    save="",
-    batch_size=1,
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
+        datasource,
+        estimator_string,
+        select,
+        result_table,
+        feature_columns,
+        feature_column_names,
+        feature_column_names_map,
+        train_label_name,
+        result_col_name,
+        feature_metas={},
+        model_params={},
+        save="",
+        batch_size=1,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
 ):
     estimator = import_model(estimator_string)
     model_params.update(feature_columns)

@@ -62,7 +62,8 @@ class MaxCompute:
 
             if label_meta:
                 try:
-                    label_idx = reader.field_names.index(label_meta["feature_name"])
+                    label_idx = reader.field_names.index(
+                        label_meta["feature_name"])
                 except ValueError:
                     # NOTE(typhoonzero): For clustering model,
                     # label_column_name may not in reader.field_names
@@ -74,20 +75,20 @@ class MaxCompute:
             i = 0
             while i < r.count:
                 expected = min(r.count - i, fetch_size)
-                for row in [[v[1] for v in rec] for rec in r[i : i + expected]]:
+                for row in [[v[1] for v in rec] for rec in r[i:i + expected]]:
                     # NOTE: If there is no label clause in the extended SQL,
                     # the default label value would be -1, the Model
                     # implementation can determine use it or not.
                     label = row[label_idx] if label_idx is not None else None
                     if label_meta and label_meta["delimiter"] != "":
                         if label_meta["dtype"] == "float32":
-                            label = np.fromstring(
-                                label, dtype=float, sep=label_meta["delimiter"]
-                            )
+                            label = np.fromstring(label,
+                                                  dtype=float,
+                                                  sep=label_meta["delimiter"])
                         elif label_meta["dtype"] == "int64":
-                            label = np.fromstring(
-                                label, dtype=int, sep=label_meta["delimiter"]
-                            )
+                            label = np.fromstring(label,
+                                                  dtype=int,
+                                                  sep=label_meta["delimiter"])
 
                     if label_idx is None:
                         yield list(row), None

@@ -32,7 +32,8 @@ except Exception as e:
 FLAGS = define_tf_flags()
 
 
-def evaluate(datasource, select, data_table, result_table, oss_model_path, metrics):
+def evaluate(datasource, select, data_table, result_table, oss_model_path,
+             metrics):
     """PAI TensorFlow evaluate wrapper
     This function do some preparation for the local evaluation, say,
     download the model from OSS, extract metadata and so on.
@@ -94,21 +95,21 @@ def evaluate(datasource, select, data_table, result_table, oss_model_path, metri
 
 
 def _evaluate(
-    datasource,
-    estimator_string,
-    select,
-    result_table,
-    feature_columns,
-    feature_column_names,
-    feature_metas={},
-    label_meta={},
-    model_params={},
-    validation_metrics=["Accuracy"],
-    save="",
-    batch_size=1,
-    validation_steps=None,
-    verbose=0,
-    pai_table="",
+        datasource,
+        estimator_string,
+        select,
+        result_table,
+        feature_columns,
+        feature_column_names,
+        feature_metas={},
+        label_meta={},
+        model_params={},
+        validation_metrics=["Accuracy"],
+        save="",
+        batch_size=1,
+        validation_steps=None,
+        verbose=0,
+        pai_table="",
 ):
     estimator_cls = import_model(estimator_string)
     is_estimator = is_tf_estimator(estimator_cls)
@@ -129,13 +130,13 @@ def _evaluate(
         FLAGS = tf.app.flags.FLAGS
         model_params["model_dir"] = FLAGS.checkpointDir
         estimator = estimator_cls(**model_params)
-        result_metrics = estimator_evaluate(estimator, eval_dataset, validation_metrics)
+        result_metrics = estimator_evaluate(estimator, eval_dataset,
+                                            validation_metrics)
     else:
         keras_model = init_model_with_feature_column(estimator, model_params)
         keras_model_pkg = sys.modules[estimator_cls.__module__]
-        result_metrics = keras_evaluate(
-            keras_model, eval_dataset, save, keras_model_pkg, validation_metrics
-        )
+        result_metrics = keras_evaluate(keras_model, eval_dataset, save,
+                                        keras_model_pkg, validation_metrics)
 
     if result_table:
         metric_name_list = ["loss"] + validation_metrics

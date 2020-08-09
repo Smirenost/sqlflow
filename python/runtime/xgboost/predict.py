@@ -19,23 +19,23 @@ DEFAULT_PREDICT_BATCH_SIZE = 10000
 
 
 def pred(
-    datasource,
-    select,
-    feature_metas,
-    feature_column_names,
-    train_label_meta,
-    pred_label_meta,
-    result_table,
-    is_pai=False,
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
-    pai_table="",
-    model_params=None,
-    train_params=None,
-    transform_fn=None,
-    feature_column_code="",
+        datasource,
+        select,
+        feature_metas,
+        feature_column_names,
+        train_label_meta,
+        pred_label_meta,
+        result_table,
+        is_pai=False,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+        pai_table="",
+        model_params=None,
+        train_params=None,
+        transform_fn=None,
+        feature_column_code="",
 ):
     conn = db.connect_with_data_source(datasource) if not is_pai else None
     dpred = xgb_dataset(
@@ -91,22 +91,22 @@ def pred(
 
 
 def predict_and_store_result(
-    bst,
-    dpred,
-    feature_file_id,
-    model_params,
-    selected_cols,
-    train_label_name,
-    pred_label_name,
-    feature_column_names,
-    feature_metas,
-    is_pai,
-    conn,
-    result_table,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
+        bst,
+        dpred,
+        feature_file_id,
+        model_params,
+        selected_cols,
+        train_label_name,
+        pred_label_name,
+        feature_column_names,
+        feature_metas,
+        is_pai,
+        conn,
+        result_table,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
 ):
     preds = bst.predict(dpred)
 
@@ -134,8 +134,7 @@ def predict_and_store_result(
         feature_file_read = open("predict.txt.raw", "r")
     else:
         feature_file_read = open(
-            "predict.raw.dir/predict.txt_%d" % feature_file_id, "r"
-        )
+            "predict.raw.dir/predict.txt_%d" % feature_file_id, "r")
 
     result_column_names = selected_cols[:]
     # remove train_label_name from result column, if train_label_name == "" or
@@ -154,15 +153,15 @@ def predict_and_store_result(
     else:
         driver = conn.driver
     with db.buffered_db_writer(
-        driver,
-        conn,
-        result_table,
-        result_column_names,
-        100,
-        hdfs_namenode_addr=hdfs_namenode_addr,
-        hive_location=hive_location,
-        hdfs_user=hdfs_user,
-        hdfs_pass=hdfs_pass,
+            driver,
+            conn,
+            result_table,
+            result_column_names,
+            100,
+            hdfs_namenode_addr=hdfs_namenode_addr,
+            hive_location=hive_location,
+            hdfs_user=hdfs_user,
+            hdfs_pass=hdfs_pass,
     ) as w:
         while True:
             line = feature_file_read.readline()
@@ -171,8 +170,7 @@ def predict_and_store_result(
             # FIXME(typhoonzero): how to output columns that are not used
             # as features, like ids?
             row = [
-                item
-                for i, item in enumerate(line.strip().split("/"))
+                item for i, item in enumerate(line.strip().split("/"))
                 if i != train_label_index
             ]
             row.append(str(preds[line_no]))

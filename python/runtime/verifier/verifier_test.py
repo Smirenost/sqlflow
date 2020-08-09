@@ -24,9 +24,8 @@ def length(iterable):
 
 
 class TestFetchSamples(unittest.TestCase):
-    @unittest.skipUnless(
-        testing.get_driver() in ["mysql", "hive"], "skip non mysql/hive tests"
-    )
+    @unittest.skipUnless(testing.get_driver() in ["mysql", "hive"],
+                         "skip non mysql/hive tests")
     def test_fetch_sample(self):
         conn = testing.get_singleton_db_connection()
 
@@ -77,9 +76,8 @@ class TestFetchVerifyColumnNameAndType(unittest.TestCase):
     def generate_select(self, table, columns):
         return "SELECT %s FROM %s" % (",".join(columns), table)
 
-    @unittest.skipUnless(
-        testing.get_driver() in ["mysql", "hive"], "skip non mysql/hive tests"
-    )
+    @unittest.skipUnless(testing.get_driver() in ["mysql", "hive"],
+                         "skip non mysql/hive tests")
     def test_verify_column_name_and_type(self):
         conn = testing.get_singleton_db_connection()
 
@@ -101,7 +99,9 @@ class TestFetchVerifyColumnNameAndType(unittest.TestCase):
             "class",
         )
 
-        test_select = ["petal_length", "petal_width", "sepal_length", "sepal_width"]
+        test_select = [
+            "petal_length", "petal_width", "sepal_length", "sepal_width"
+        ]
         verify_column_name_and_type(
             conn,
             self.generate_select(train_table, train_select),
@@ -124,11 +124,11 @@ class TestFetchVerifyColumnNameAndType(unittest.TestCase):
 
         name_and_type["petal_length"] = "VARCHAR(255)"  # change the data type
         create_column_str = ",".join(
-            ["%s %s" % (n, t) for n, t in name_and_type.items()]
-        )
+            ["%s %s" % (n, t) for n, t in name_and_type.items()])
 
         drop_sql = "DROP TABLE IF EXISTS %s" % new_table_name
-        create_sql = "CREATE TABLE %s(%s)" % (new_table_name, create_column_str)
+        create_sql = "CREATE TABLE %s(%s)" % (new_table_name,
+                                              create_column_str)
         cursor.execute(drop_sql)
         cursor.execute(create_sql)
         with self.assertRaises(ValueError):

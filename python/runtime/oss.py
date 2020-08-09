@@ -38,13 +38,11 @@ def get_bucket(name, ak=None, sk=None, endpoint=None):
     if endpoint is None:
         endpoint = os.getenv("SQLFLOW_OSS_MODEL_ENDPOINT", "")
     if ak == "" or sk == "":
-        raise ValueError(
-            "must configure SQLFLOW_OSS_AK and SQLFLOW_OSS_SK " "when submitting to PAI"
-        )
+        raise ValueError("must configure SQLFLOW_OSS_AK and SQLFLOW_OSS_SK "
+                         "when submitting to PAI")
     if endpoint == "":
         raise ValueError(
-            "must configure SQLFLOW_OSS_MODEL_ENDPOINT when submitting to PAI"
-        )
+            "must configure SQLFLOW_OSS_MODEL_ENDPOINT when submitting to PAI")
     auth = oss2.Auth(ak, sk)
     return oss2.Bucket(auth, endpoint, name)
 
@@ -214,16 +212,16 @@ def load_oss_model(oss_model_dir, estimator):
 
 
 def save_oss_model(
-    oss_model_dir,
-    model_name,
-    is_estimator,
-    feature_column_names,
-    feature_column_names_map,
-    feature_metas,
-    label_meta,
-    model_params,
-    feature_columns_code,
-    num_workers,
+        oss_model_dir,
+        model_name,
+        is_estimator,
+        feature_column_names,
+        feature_column_names_map,
+        feature_metas,
+        label_meta,
+        model_params,
+        feature_columns_code,
+        num_workers,
 ):
     # Keras single node is using h5 format to save the model, no need to deal
     # with export model format. Keras distributed mode will use estimator, so

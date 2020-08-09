@@ -29,8 +29,7 @@ from runtime.tensorflow.get_tf_version import tf_is_version2
 class SQLFlowEstimatorBuilder(EstimatorBuilder):
     def _build(self, experiment, run_config):
         feature_columns = [
-            tf.feature_column.numeric_column(col_name)
-            for col_name in [
+            tf.feature_column.numeric_column(col_name) for col_name in [
                 "sepal_length",
                 "sepal_width",
                 "petal_length",
@@ -60,7 +59,9 @@ if __name__ == "__main__":
     )
 
     features = []
-    for col_name in ["sepal_length", "sepal_width", "petal_length", "petal_width"]:
+    for col_name in [
+            "sepal_length", "sepal_width", "petal_length", "petal_width"
+    ]:
         # NOTE: add sparse columns like:
         # SparseColumn(name="deep_id", shape=[15033], dtype="int")
         features.append(DenseColumn(name=col_name, shape=[1], dtype="float32"))

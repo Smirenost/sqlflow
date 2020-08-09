@@ -82,7 +82,8 @@ def _update_steps(function_name, caller_line, args=None, template_name=None):
                 if "couler" in value:
                     tmp = args[i].split(".")
                     if len(tmp) < 3:
-                        raise ValueError("wrong container return representation")
+                        raise ValueError(
+                            "wrong container return representation")
                     # To avoid duplicate map function
                     # value = ".".join(map(str, tmp[2:]))
                     value = tmp[2]
@@ -91,19 +92,19 @@ def _update_steps(function_name, caller_line, args=None, template_name=None):
                     value = '"{{steps.%s}}"' % value
 
                 if _run_concurrent_lock:
-                    parameters.append(
-                        {
-                            "name": pyfunc.input_parameter(template_name, i),
-                            "value": value,
-                        }
-                    )
+                    parameters.append({
+                        "name":
+                        pyfunc.input_parameter(template_name, i),
+                        "value":
+                        value,
+                    })
                 else:
-                    parameters.append(
-                        {
-                            "name": pyfunc.input_parameter(function_name, i),
-                            "value": value,
-                        }
-                    )
+                    parameters.append({
+                        "name":
+                        pyfunc.input_parameter(function_name, i),
+                        "value":
+                        value,
+                    })
             step_template["arguments"] = {"parameters": parameters}
 
         if _condition_id is not None:
@@ -140,9 +141,8 @@ def run_script(image, command=None, source=None, env=None, resources=None):
             script["command"] = [command]
 
             # To retrieve function code
-            script["source"] = (
-                pyfunc.body(source) if command.lower() == "python" else source
-            )
+            script["source"] = (pyfunc.body(source)
+                                if command.lower() == "python" else source)
 
             if env is not None:
                 script["env"] = _convert_dict_to_env_list(env)
@@ -164,7 +164,13 @@ def run_script(image, command=None, source=None, env=None, resources=None):
 
 
 def run_container(
-    image, command=None, args=None, output=None, env=None, secret=None, resources=None,
+        image,
+        command=None,
+        args=None,
+        output=None,
+        env=None,
+        secret=None,
+        resources=None,
 ):
     """Generate an Argo container template.  For example, the template whalesay
     in https://github.com/argoproj/argo/tree/master/examples#hello-world
@@ -224,7 +230,12 @@ def run_container(
             output_id = output.id
             path = output.path
             _output = OrderedDict()
-            _output["parameters"] = [{"name": output_id, "valueFrom": {"path": path}}]
+            _output["parameters"] = [{
+                "name": output_id,
+                "valueFrom": {
+                    "path": path
+                }
+            }]
             template["outputs"] = _output
         # else TODO, when container does not output anything
 
@@ -234,9 +245,8 @@ def run_container(
         _templates[function_name] = template
 
     if _run_concurrent_lock:
-        _update_steps(
-            "concurrent_func_name", _concurrent_func_line, args, function_name
-        )
+        _update_steps("concurrent_func_name", _concurrent_func_line, args,
+                      function_name)
     else:
         _update_steps(function_name, caller_line, args)
 
@@ -387,9 +397,11 @@ def exec_while(condition, inner_while):
         condition_suffix,
         pre_dict["value"],
     )
-    step_out_template = OrderedDict(
-        {"name": step_out_name, "template": recursive_name, "when": when_prefix,}
-    )
+    step_out_template = OrderedDict({
+        "name": step_out_name,
+        "template": recursive_name,
+        "when": when_prefix,
+    })
     step_out_id = pyfunc.invocation_name(step_out_name, recursive_id)
     _while_steps[step_out_id] = [step_out_template]
 
@@ -400,9 +412,10 @@ def exec_while(condition, inner_while):
     _templates[recursive_name] = template
 
     # Add recursive logic to global _steps
-    recursive_out_template = OrderedDict(
-        {"name": recursive_id, "template": recursive_name}
-    )
+    recursive_out_template = OrderedDict({
+        "name": recursive_id,
+        "template": recursive_name
+    })
 
     if recursive_id in _steps:
         _steps.get(recursive_id).append(recursive_out_template)
@@ -441,9 +454,10 @@ def map(function, input_list):
     input_parameters = function_template["inputs"]["parameters"]
 
     for para_name in input_parameters:
-        parameters.append(
-            {"name": para_name["name"], "value": '"{{item.%s}}"' % para_name["name"],}
-        )
+        parameters.append({
+            "name": para_name["name"],
+            "value": '"{{item.%s}}"' % para_name["name"],
+        })
 
     inner_step["arguments"] = {"parameters": parameters}
 
@@ -528,7 +542,9 @@ def artifact(path):
     _, caller_line = pyfunc.invocation_location()
 
     # TODO: support outputs to an artifact repo later
-    ret = Artifact(path=path, id="output-id-%s" % caller_line, type="parameters")
+    ret = Artifact(path=path,
+                   id="output-id-%s" % caller_line,
+                   type="parameters")
 
     return ret
 
@@ -536,8 +552,11 @@ def artifact(path):
 def _predicate(pre, post, condition):
     """Generates an Argo predicate.
     """
-    dict_config = {"pre": pre() if isinstance(pre, types.FunctionType) else pre}
-    dict_config["post"] = post() if isinstance(post, types.FunctionType) else post
+    dict_config = {
+        "pre": pre() if isinstance(pre, types.FunctionType) else pre
+    }
+    dict_config["post"] = post() if isinstance(post,
+                                               types.FunctionType) else post
     # TODO: check the condition
     dict_config["condition"] = condition
 
@@ -642,7 +661,12 @@ def _convert_secret_to_list(secret):
     for key, _ in data.items():
         secret_env = {
             "name": key,
-            "valueFrom": {"secretKeyRef": {"name": secret_name, "key": key}},
+            "valueFrom": {
+                "secretKeyRef": {
+                    "name": secret_name,
+                    "key": key
+                }
+            },
         }
         env_secrets.append(secret_env)
 
@@ -665,9 +689,10 @@ def _resources(resources):
         raise TypeError("container resource config need to be a dict")
 
 
-def _create_job(
-    manifest, action="create", success_condition=None, failure_condition=None
-):
+def _create_job(manifest,
+                action="create",
+                success_condition=None,
+                failure_condition=None):
     if manifest is None:
         raise ValueError("Input manifest can not be null")
 
@@ -692,7 +717,8 @@ def _update_pod_config(template):
 
 def _update_workflow_spec(spec):
 
-    if _cluster_config is not None and hasattr(_cluster_config, "with_workflow_spec"):
+    if _cluster_config is not None and hasattr(_cluster_config,
+                                               "with_workflow_spec"):
         spec = _cluster_config.with_workflow_spec(spec)
 
     return spec
@@ -725,7 +751,9 @@ class Secret:
         secret_yaml = {
             "apiVersion": "v1",
             "kind": "Secret",
-            "metadata": {"name": self.name},
+            "metadata": {
+                "name": self.name
+            },
             "type": "Opaque",
             "data": {},
         }

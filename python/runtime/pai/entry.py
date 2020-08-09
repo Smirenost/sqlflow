@@ -59,7 +59,8 @@ def call_fun(func, params):
     dict_args = {}
     for i, name in enumerate(sig[0]):
         if i < required_len and name not in params:
-            raise SQLFlowDiagnostic("Non-default param is not passed:%s" % name)
+            raise SQLFlowDiagnostic("Non-default param is not passed:%s" %
+                                    name)
         if name in params:
             dict_args[name] = params[name]
     return func(**dict_args)

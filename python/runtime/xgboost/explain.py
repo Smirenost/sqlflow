@@ -27,7 +27,8 @@ def infer_dtype(feature):
         elif feature.dtype in [np.int32, np.int64]:
             return "int64"
         else:
-            raise ValueError("Not supported data type {}".format(feature.dtype))
+            raise ValueError("Not supported data type {}".format(
+                feature.dtype))
     elif isinstance(feature, (np.float32, np.float64, float)):
         return "float32"
     elif isinstance(feature, (np.int32, np.int64, six.integer_types)):
@@ -37,15 +38,15 @@ def infer_dtype(feature):
 
 
 def xgb_shap_dataset(
-    datasource,
-    select,
-    feature_column_names,
-    label_meta,
-    feature_metas,
-    is_pai,
-    pai_explain_table,
-    transform_fn=None,
-    feature_column_code="",
+        datasource,
+        select,
+        feature_column_names,
+        label_meta,
+        feature_metas,
+        is_pai,
+        pai_explain_table,
+        transform_fn=None,
+        feature_column_code="",
 ):
     label_column_name = label_meta["feature_name"]
     if is_pai:
@@ -54,7 +55,8 @@ def xgb_shap_dataset(
             pai_table_parts[0],
             pai_table_parts[1],
         )
-        stream = db.pai_maxcompute_db_generator(formatted_pai_table, label_column_name)
+        stream = db.pai_maxcompute_db_generator(formatted_pai_table,
+                                                label_column_name)
         selected_cols = db.pai_selected_cols(formatted_pai_table)
     else:
         conn = db.connect_with_data_source(datasource)
@@ -73,9 +75,9 @@ def xgb_shap_dataset(
 
     i = 0
     for row, label in stream():
-        features = db.read_features_from_row(
-            row, selected_cols, feature_column_names, feature_metas
-        )
+        features = db.read_features_from_row(row, selected_cols,
+                                             feature_column_names,
+                                             feature_metas)
         if transform_fn:
             features = transform_fn(features)
 
@@ -86,8 +88,7 @@ def xgb_shap_dataset(
                 size = int(np.prod(dense_shape))
                 row_indices = np.zeros(shape=[col_indices.size])
                 sparse_matrix = scipy.sparse.csr_matrix(
-                    (values, (row_indices, col_indices)), shape=[1, size]
-                )
+                    (values, (row_indices, col_indices)), shape=[1, size])
                 values = sparse_matrix.toarray()
             else:
                 values = feature[0]
@@ -121,7 +122,8 @@ def xgb_shap_dataset(
                     column_names.append(feature_names[j])
                 else:
                     for k in six.moves.range(start, end):
-                        column_names.append("{}-{}".format(feature_names[j], k))
+                        column_names.append("{}-{}".format(
+                            feature_names[j], k))
 
             xs = pd.DataFrame(columns=column_names)
 
@@ -156,26 +158,26 @@ def xgb_shap_values(x):
 
 
 def explain(
-    datasource,
-    select,
-    feature_field_meta,
-    feature_column_names,
-    label_meta,
-    summary_params,
-    result_table="",
-    is_pai=False,
-    pai_explain_table="",
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
-    oss_dest=None,
-    oss_ak=None,
-    oss_sk=None,
-    oss_endpoint=None,
-    oss_bucket_name=None,
-    transform_fn=None,
-    feature_column_code="",
+        datasource,
+        select,
+        feature_field_meta,
+        feature_column_names,
+        label_meta,
+        summary_params,
+        result_table="",
+        is_pai=False,
+        pai_explain_table="",
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+        oss_dest=None,
+        oss_ak=None,
+        oss_sk=None,
+        oss_endpoint=None,
+        oss_bucket_name=None,
+        transform_fn=None,
+        feature_column_code="",
 ):
     x = xgb_shap_dataset(
         datasource,
@@ -241,7 +243,8 @@ def explain(
         )
     else:
         explainer.plot_and_save(
-            lambda: shap.summary_plot(shap_values, x, show=False, **summary_params),
+            lambda: shap.summary_plot(
+                shap_values, x, show=False, **summary_params),
             oss_dest,
             oss_ak,
             oss_sk,
@@ -251,26 +254,26 @@ def explain(
 
 
 def write_shap_values(
-    shap_values,
-    driver,
-    conn,
-    result_table,
-    feature_column_names,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
-):
-    with db.buffered_db_writer(
+        shap_values,
         driver,
         conn,
         result_table,
         feature_column_names,
-        100,
         hdfs_namenode_addr,
         hive_location,
         hdfs_user,
         hdfs_pass,
+):
+    with db.buffered_db_writer(
+            driver,
+            conn,
+            result_table,
+            feature_column_names,
+            100,
+            hdfs_namenode_addr,
+            hive_location,
+            hdfs_user,
+            hdfs_pass,
     ) as w:
         for row in shap_values:
             w.write(list(row))

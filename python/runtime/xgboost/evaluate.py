@@ -43,22 +43,22 @@ DEFAULT_PREDICT_BATCH_SIZE = 10000
 
 
 def evaluate(
-    datasource,
-    select,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    result_table,
-    validation_metrics=["accuracy_score"],
-    is_pai=False,
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
-    pai_table="",
-    model_params=None,
-    transform_fn=None,
-    feature_column_code="",
+        datasource,
+        select,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        result_table,
+        validation_metrics=["accuracy_score"],
+        is_pai=False,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
+        pai_table="",
+        model_params=None,
+        transform_fn=None,
+        feature_column_code="",
 ):
     conn = db.connect_with_data_source(datasource) if not is_pai else None
     dpred = xgb_dataset(
@@ -102,20 +102,20 @@ def evaluate(
 
 
 def evaluate_and_store_result(
-    bst,
-    dpred,
-    feature_file_id,
-    validation_metrics,
-    model_params,
-    feature_column_names,
-    label_meta,
-    is_pai,
-    conn,
-    result_table,
-    hdfs_namenode_addr,
-    hive_location,
-    hdfs_user,
-    hdfs_pass,
+        bst,
+        dpred,
+        feature_file_id,
+        validation_metrics,
+        model_params,
+        feature_column_names,
+        label_meta,
+        is_pai,
+        conn,
+        result_table,
+        hdfs_namenode_addr,
+        hive_location,
+        hdfs_user,
+        hdfs_pass,
 ):
     preds = bst.predict(dpred)
     # FIXME(typhoonzero): copied from predict.py
@@ -149,7 +149,8 @@ def evaluate_and_store_result(
         elif label_meta["dtype"] == "int64" or label_meta["dtype"] == "int32":
             label = int(row[0])
         else:
-            raise ValueError("unsupported label dtype: %s" % label_meta["dtype"])
+            raise ValueError("unsupported label dtype: %s" %
+                             label_meta["dtype"])
         y_test_list.append(label)
     y_test = np.array(y_test_list)
 
@@ -168,15 +169,15 @@ def evaluate_and_store_result(
         driver = conn.driver
     result_columns = ["loss"] + validation_metrics
     with db.buffered_db_writer(
-        driver,
-        conn,
-        result_table,
-        result_columns,
-        100,
-        hdfs_namenode_addr=hdfs_namenode_addr,
-        hive_location=hive_location,
-        hdfs_user=hdfs_user,
-        hdfs_pass=hdfs_pass,
+            driver,
+            conn,
+            result_table,
+            result_columns,
+            100,
+            hdfs_namenode_addr=hdfs_namenode_addr,
+            hive_location=hive_location,
+            hdfs_user=hdfs_user,
+            hdfs_pass=hdfs_pass,
     ) as w:
         row = ["0.0"]
         for mn in validation_metrics:

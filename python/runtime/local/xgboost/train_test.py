@@ -63,7 +63,8 @@ label_meta = {
 
 
 class TestXGBoostTrain(TestCase):
-    @unittest.skipUnless(testing.get_driver() == "mysql", "skip non mysql tests")
+    @unittest.skipUnless(testing.get_driver() == "mysql",
+                         "skip non mysql tests")
     def test_train(self):
         ds = testing.get_datasource()
         with tempfile.TemporaryDirectory() as tmp_dir_name:

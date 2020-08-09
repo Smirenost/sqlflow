@@ -25,33 +25,35 @@ from runtime.xgboost.pai_rabit import PaiXGBoostWorker
 
 
 def dist_train(
-    flags,
-    datasource,
-    select,
-    model_params,
-    train_params,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    validation_select,
-    disk_cache=False,
-    batch_size=None,
-    epoch=1,
-    load_pretrained_model=False,
-    is_pai=False,
-    pai_train_table="",
-    pai_validate_table="",
-    oss_model_dir="",
-    transform_fn=None,
-    feature_column_code="",
-    model_repo_image="",
-    original_sql="",
+        flags,
+        datasource,
+        select,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        validation_select,
+        disk_cache=False,
+        batch_size=None,
+        epoch=1,
+        load_pretrained_model=False,
+        is_pai=False,
+        pai_train_table="",
+        pai_validate_table="",
+        oss_model_dir="",
+        transform_fn=None,
+        feature_column_code="",
+        model_repo_image="",
+        original_sql="",
 ):
     if not is_pai:
-        raise Exception("XGBoost distributed training is only supported on PAI")
+        raise Exception(
+            "XGBoost distributed training is only supported on PAI")
 
     num_workers = len(flags.worker_hosts.split(","))
-    cluster, node, task_id = pai_dist.make_distributed_info_without_evaluator(flags)
+    cluster, node, task_id = pai_dist.make_distributed_info_without_evaluator(
+        flags)
     master_addr = cluster["ps"][0].split(":")
     master_host = master_addr[0]
     master_port = int(master_addr[1]) + 1
@@ -60,9 +62,9 @@ def dist_train(
     try:
         if node == "ps":
             if task_id == 0:
-                tracker = PaiXGBoostTracker(
-                    host=master_host, nworkers=num_workers, port=master_port
-                )
+                tracker = PaiXGBoostTracker(host=master_host,
+                                            nworkers=num_workers,
+                                            port=master_port)
         else:
             if node != "chief":
                 task_id += 1
@@ -111,28 +113,28 @@ def dist_train(
 
 
 def train(
-    datasource,
-    select,
-    model_params,
-    train_params,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    validation_select,
-    disk_cache=False,
-    batch_size=None,
-    epoch=1,
-    load_pretrained_model=False,
-    is_pai=False,
-    pai_train_table="",
-    pai_validate_table="",
-    rank=0,
-    nworkers=1,
-    oss_model_dir="",
-    transform_fn=None,
-    feature_column_code="",
-    model_repo_image="",
-    original_sql="",
+        datasource,
+        select,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        validation_select,
+        disk_cache=False,
+        batch_size=None,
+        epoch=1,
+        load_pretrained_model=False,
+        is_pai=False,
+        pai_train_table="",
+        pai_validate_table="",
+        rank=0,
+        nworkers=1,
+        oss_model_dir="",
+        transform_fn=None,
+        feature_column_code="",
+        model_repo_image="",
+        original_sql="",
 ):
     if batch_size == -1:
         batch_size = None
@@ -169,8 +171,7 @@ def train(
                 nworkers=nworkers,
                 transform_fn=transform_fn,
                 feature_column_code=feature_column_code,
-            )
-        )[0]
+            ))[0]
 
     filename = "my_model"
     if load_pretrained_model:
@@ -185,14 +186,12 @@ def train(
             watchlist.append((dvalidate, "validate"))
 
         re = {}
-        bst = xgb.train(
-            model_params,
-            per_batch_dmatrix,
-            evals=watchlist,
-            evals_result=re,
-            xgb_model=bst,
-            **train_params
-        )
+        bst = xgb.train(model_params,
+                        per_batch_dmatrix,
+                        evals=watchlist,
+                        evals_result=re,
+                        xgb_model=bst,
+                        **train_params)
         print("Evaluation result: %s" % re)
 
     if rank == 0:
@@ -241,9 +240,8 @@ def save_model_to_local_file(booster, model_params, meta, filename):
             num_class = 2
         else:
             num_class = model_params.get("num_class")
-            assert (
-                num_class is not None and num_class > 0
-            ), "num_class should not be None"
+            assert (num_class is not None
+                    and num_class > 0), "num_class should not be None"
 
         # To fake a trained XGBClassifier, there must be "_le", "classes_",
         # inside XGBClassifier. See here:
@@ -261,7 +259,8 @@ def save_model_to_local_file(booster, model_params, meta, filename):
     elif objective.startswith("rank:"):
         model = xgb.XGBRanker()
     else:
-        raise ValueError("Not supported objective {} for saving PMML".format(objective))
+        raise ValueError(
+            "Not supported objective {} for saving PMML".format(objective))
 
     model_type = type(model).__name__
     bst_meta["type"] = model_type
@@ -279,14 +278,14 @@ def save_model_to_local_file(booster, model_params, meta, filename):
 
 
 def save_model(
-    model_dir,
-    filename,
-    model_params,
-    train_params,
-    feature_metas,
-    feature_column_names,
-    label_meta,
-    feature_column_code,
+        model_dir,
+        filename,
+        model_params,
+        train_params,
+        feature_metas,
+        feature_column_names,
+        label_meta,
+        feature_column_code,
 ):
     pai_model_store.save_file(model_dir, filename)
     pai_model_store.save_file(model_dir, "{}.pmml".format(filename))

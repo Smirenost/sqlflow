@@ -77,7 +77,8 @@ PYTHON_ENCODE = re.compile("^[ \t\v]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)")
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Checker for copyright declaration.")
+    parser = argparse.ArgumentParser(
+        description="Checker for copyright declaration.")
     parser.add_argument("filenames", nargs="*", help="Filenames to check")
     args = parser.parse_args(argv)
 
@@ -102,22 +103,22 @@ def main(argv=None):
         if PYTHON_ENCODE.match(first_line) is not None:
             skip_one = True
 
-        original_content_lines = io.open(filename, encoding="utf-8").read().split("\n")
+        original_content_lines = io.open(filename,
+                                         encoding="utf-8").read().split("\n")
         copyright_string = generate_copyright(COPYRIGHT, lang_type(filename))
         if skip_one:
             new_contents = "\n".join(
-                [original_content_lines[0], copyright_string]
-                + original_content_lines[1:]
-            )
+                [original_content_lines[0], copyright_string] +
+                original_content_lines[1:])
         elif skip_two:
-            new_contents = "\n".join(
-                [original_content_lines[0], original_content_lines[1], copyright_string]
-                + original_content_lines[2:]
-            )
+            new_contents = "\n".join([
+                original_content_lines[0], original_content_lines[1],
+                copyright_string
+            ] + original_content_lines[2:])
         else:
             new_contents = generate_copyright(
-                COPYRIGHT, lang_type(filename)
-            ) + "\n".join(original_content_lines)
+                COPYRIGHT,
+                lang_type(filename)) + "\n".join(original_content_lines)
         print("Auto Insert Copyright Header {}".format(filename))
         with io.open(filename, "w", encoding="utf8") as output_file:
             output_file.write(new_contents)

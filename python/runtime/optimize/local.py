@@ -28,13 +28,13 @@ DATA_FRAME_LOCK = threading.Lock()
 
 
 def generate_model_with_data_frame(
-    data_frame,
-    variables,
-    variable_type,
-    result_value_name,
-    objective,
-    direction,
-    constraints,
+        data_frame,
+        variables,
+        variable_type,
+        result_value_name,
+        objective,
+        direction,
+        constraints,
 ):
     """
     Generate a Pyomo ConcreteModel.
@@ -99,7 +99,8 @@ def generate_model_with_data_frame(
                 setattr(model, attr_name, pyomo_env.ConstraintList())
                 constraint_list = getattr(model, attr_name)
                 template = "lambda model, constraint_list: [constraint_list.add(%s) for %s in %s]"  # noqa: E501
-                add_constraint_str = template % (expr, ",".join(iter_vars), for_range)
+                add_constraint_str = template % (expr, ",".join(iter_vars),
+                                                 for_range)
                 eval(add_constraint_str)(model, constraint_list)
             else:
                 assert not iter_vars, "for_range and iter_vars must be both empty"
@@ -147,13 +148,12 @@ def solve_model(model, solver):
             pyomo_dtype = type(model.x[idx])
 
         assert isinstance(
-            model.x[idx], pyomo_dtype
-        ), "all variables must be of the same data type"
+            model.x[idx],
+            pyomo_dtype), "all variables must be of the same data type"
 
     if has_error:
         msg = "Solve model error. Termination condition: {}.".format(
-            solved_results.solver.termination_condition
-        )
+            solved_results.solver.termination_condition)
         raise ValueError(msg)
 
     np_dtype = np.int64 if model.x[0].is_integer() else np.float64
@@ -192,9 +192,8 @@ def load_db_data_to_data_frame(datasource, select):
     return df
 
 
-def save_solved_result_in_db(
-    solved_result, data_frame, variables, result_value_name, datasource, result_table
-):
+def save_solved_result_in_db(solved_result, data_frame, variables,
+                             result_value_name, datasource, result_table):
     """
     Save the solved result of the Pyomo model into the database.
 
@@ -228,7 +227,8 @@ def save_solved_result_in_db(
     data_frame[result_value_name] = solved_result
 
     conn = db.connect_with_data_source(datasource)
-    with db.buffered_db_writer(conn.driver, conn, result_table, column_names) as w:
+    with db.buffered_db_writer(conn.driver, conn, result_table,
+                               column_names) as w:
         for i in six.moves.range(len(data_frame)):
             rows = list(data_frame.loc[i])
             w.write(rows)
@@ -239,16 +239,16 @@ def save_solved_result_in_db(
 
 
 def run_optimize_locally(
-    datasource,
-    select,
-    variables,
-    variable_type,
-    result_value_name,
-    objective,
-    direction,
-    constraints,
-    solver,
-    result_table,
+        datasource,
+        select,
+        variables,
+        variable_type,
+        result_value_name,
+        objective,
+        direction,
+        constraints,
+        solver,
+        result_table,
 ):
     """
     Run the optimize case in the local mode.
@@ -270,7 +270,8 @@ def run_optimize_locally(
         None
     """
 
-    data_frame = load_db_data_to_data_frame(datasource=datasource, select=select)
+    data_frame = load_db_data_to_data_frame(datasource=datasource,
+                                            select=select)
     model = generate_model_with_data_frame(
         data_frame=data_frame,
         variables=variables,

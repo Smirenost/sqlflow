@@ -34,10 +34,7 @@ def parseMySQLDSN(dsn):
 def parseHiveDSN(dsn):
     # usr:pswd@hiveserver:10000/mydb?auth=PLAIN&session.mapreduce_job_queuename=mr
     user_passwd, address_database, config_str = re.findall(
-        "^(.*)@([.a-zA-Z0-9/:_]*)(\?.*)?", dsn
-    )[
-        0
-    ]  # noqa: W605
+        "^(.*)@([.a-zA-Z0-9/:_]*)(\?.*)?", dsn)[0]  # noqa: W605
     user, passwd = user_passwd.split(":")
     if len(address_database.split("/")) > 1:
         address, database = address_database.split("/")
@@ -56,17 +53,14 @@ def parseHiveDSN(dsn):
     session = {}
     for k, v in config.items():
         if k.startswith("session."):
-            session[k[len("session.") :]] = v
+            session[k[len("session."):]] = v
     return user, passwd, host, port, database, auth, session
 
 
 def parseMaxComputeDSN(dsn):
     # access_id:access_key@service.com/api?curr_project=test_ci&scheme=http
     user_passwd, address, config_str = re.findall(
-        "^(.*)@([-.a-zA-Z0-9/]*)(\?.*)?", dsn
-    )[
-        0
-    ]  # noqa: W605
+        "^(.*)@([-.a-zA-Z0-9/]*)(\?.*)?", dsn)[0]  # noqa: W605
     user, passwd = user_passwd.split(":")
     config = {}
     if len(config_str) > 1:
@@ -86,11 +80,16 @@ def connect_with_data_source(driver_dsn):
         from MySQLdb import connect
 
         user, passwd, host, port, database, config = parseMySQLDSN(dsn)
-        conn = connect(user=user, passwd=passwd, db=database, host=host, port=int(port))
+        conn = connect(user=user,
+                       passwd=passwd,
+                       db=database,
+                       host=host,
+                       port=int(port))
     elif driver == "hive":
         from impala.dbapi import connect
 
-        user, passwd, host, port, database, auth, session_cfg = parseHiveDSN(dsn)
+        user, passwd, host, port, database, auth, session_cfg = parseHiveDSN(
+            dsn)
         conn = connect(
             user=user,
             password=passwd,
@@ -108,22 +107,31 @@ def connect_with_data_source(driver_dsn):
         conn = MaxCompute.connect(database, user, passwd, address)
     else:
         raise ValueError(
-            "connect_with_data_source doesn't support driver type {}".format(driver)
-        )
+            "connect_with_data_source doesn't support driver type {}".format(
+                driver))
 
     conn.driver = driver
     return conn
 
 
-def connect(driver, database, user, password, host, port, session_cfg={}, auth=""):
+def connect(driver,
+            database,
+            user,
+            password,
+            host,
+            port,
+            session_cfg={},
+            auth=""):
     if driver == "mysql":
         # NOTE: use MySQLdb to avoid bugs like infinite reading:
         # https://bugs.mysql.com/bug.php?id=91971
         from MySQLdb import connect
 
-        conn = connect(
-            user=user, passwd=password, db=database, host=host, port=int(port)
-        )
+        conn = connect(user=user,
+                       passwd=password,
+                       db=database,
+                       host=host,
+                       port=int(port))
     elif driver == "hive":
         from impala.dbapi import connect
 
@@ -157,10 +165,14 @@ def read_feature(raw_val, feature_spec, feature_name):
         if feature_spec["format"] == "kv":
             items = raw_val.split()
             items = [item.split(":", 2) for item in items]
-            indices = np.array([int(item[0]) for item in items], dtype=np.int64)
-            values = np.array([float(item[1]) for item in items], dtype=np.float32)
+            indices = np.array([int(item[0]) for item in items],
+                               dtype=np.int64)
+            values = np.array([float(item[1]) for item in items],
+                              dtype=np.float32)
         else:
-            indices = np.fromstring(raw_val, dtype=int, sep=feature_spec["delimiter"])
+            indices = np.fromstring(raw_val,
+                                    dtype=int,
+                                    sep=feature_spec["delimiter"])
             indices = indices.reshape(indices.size, 1)
             values = np.ones([indices.size], dtype=np.int64)
 
@@ -169,26 +181,27 @@ def read_feature(raw_val, feature_spec, feature_name):
     elif feature_spec["delimiter"] != "":
         # Dense string vector
         if feature_spec["dtype"] == "float32":
-            return np.fromstring(
-                raw_val, dtype=np.float32, sep=feature_spec["delimiter"]
-            )
+            return np.fromstring(raw_val,
+                                 dtype=np.float32,
+                                 sep=feature_spec["delimiter"])
         elif feature_spec["dtype"] == "int64":
-            return np.fromstring(raw_val, dtype=np.int64, sep=feature_spec["delimiter"])
+            return np.fromstring(raw_val,
+                                 dtype=np.int64,
+                                 sep=feature_spec["delimiter"])
         else:
-            raise ValueError(
-                "unrecognize dtype {}".format(feature_spec[feature_name]["dtype"])
-            )
+            raise ValueError("unrecognize dtype {}".format(
+                feature_spec[feature_name]["dtype"]))
     elif feature_spec["dtype"] == "float32":
-        return (float(raw_val),)
+        return (float(raw_val), )
     elif feature_spec["dtype"] == "int64":
         int_raw_val = INT64_TYPE(raw_val)
-        return (int_raw_val,)
+        return (int_raw_val, )
     elif feature_spec["dtype"] == "string":
-        return (str(raw_val),)
+        return (str(raw_val), )
     else:
         # This case is used for unittests.
         # For example, explain_test.py uses int32 data.
-        return (raw_val,)
+        return (raw_val, )
 
 
 LIMIT_PATTERN = re.compile("LIMIT\\s+([0-9]+)", flags=re.I)
@@ -258,7 +271,8 @@ def _get_mysql_columns_and_types(cursor):
         # to represent the data type.
         typ = MYSQL_FIELD_TYPE_DICT.get(desc[1])
         if typ is None:
-            raise ValueError("unsupported data type of column {}".format(desc[0]))
+            raise ValueError("unsupported data type of column {}".format(
+                desc[0]))
         name_and_type.append((desc[0], typ))
     return name_and_type
 
@@ -341,10 +355,12 @@ def get_pai_table_row_num(table):
     return row_num
 
 
-def read_features_from_row(row, select_cols, feature_column_names, feature_metas):
+def read_features_from_row(row, select_cols, feature_column_names,
+                           feature_metas):
     features = []
     for name in feature_column_names:
-        feature = read_feature(row[select_cols.index(name)], feature_metas[name], name)
+        feature = read_feature(row[select_cols.index(name)],
+                               feature_metas[name], name)
         features.append(feature)
     return tuple(features)
 
@@ -368,7 +384,8 @@ def db_generator(conn, statement, label_meta=None, fetch_size=128):
 
         if label_meta:
             try:
-                label_idx = reader.field_names.index(label_meta["feature_name"])
+                label_idx = reader.field_names.index(
+                    label_meta["feature_name"])
             except ValueError:
                 # NOTE(typhoonzero): For clustering model, label_column_name
                 # may not in reader.field_names when predicting.
@@ -391,13 +408,13 @@ def db_generator(conn, statement, label_meta=None, fetch_size=128):
                 label = row[label_idx] if label_idx is not None else -1
                 if label_meta and label_meta["delimiter"] != "":
                     if label_meta["dtype"] == "float32":
-                        label = np.fromstring(
-                            label, dtype=float, sep=label_meta["delimiter"]
-                        )
+                        label = np.fromstring(label,
+                                              dtype=float,
+                                              sep=label_meta["delimiter"])
                     elif label_meta["dtype"] == "int64":
-                        label = np.fromstring(
-                            label, dtype=int, sep=label_meta["delimiter"]
-                        )
+                        label = np.fromstring(label,
+                                              dtype=int,
+                                              sep=label_meta["delimiter"])
                 if label_idx is None:
                     yield list(row), None
                 else:
@@ -416,20 +433,20 @@ def db_generator(conn, statement, label_meta=None, fetch_size=128):
     return reader
 
 
-def pai_maxcompute_db_generator(
-    table, label_column_name=None, slice_id=0, slice_count=1
-):
+def pai_maxcompute_db_generator(table,
+                                label_column_name=None,
+                                slice_id=0,
+                                slice_count=1):
     def reader():
         import paiio
 
-        pai_reader = paiio.TableReader(
-            table, slice_id=slice_id, slice_count=slice_count
-        )
+        pai_reader = paiio.TableReader(table,
+                                       slice_id=slice_id,
+                                       slice_count=slice_count)
 
         selected_cols = [item["colname"] for item in pai_reader.get_schema()]
-        label_index = (
-            selected_cols.index(label_column_name) if label_column_name else None
-        )
+        label_index = (selected_cols.index(label_column_name)
+                       if label_column_name else None)
 
         while True:
             try:
@@ -448,15 +465,15 @@ def pai_maxcompute_db_generator(
 
 @contextlib.contextmanager
 def buffered_db_writer(
-    driver,
-    conn,
-    table_name,
-    table_schema,
-    buff_size=100,
-    hdfs_namenode_addr="",
-    hive_location="",
-    hdfs_user="",
-    hdfs_pass="",
+        driver,
+        conn,
+        table_name,
+        table_schema,
+        buff_size=100,
+        hdfs_namenode_addr="",
+        hive_location="",
+        hdfs_user="",
+        hdfs_pass="",
 ):
     if driver == "hive":
         w = db_writer.HiveDBWriter(
@@ -470,11 +487,13 @@ def buffered_db_writer(
             hdfs_pass=hdfs_pass,
         )
     elif driver == "maxcompute":
-        w = db_writer.MaxComputeDBWriter(conn, table_name, table_schema, buff_size)
+        w = db_writer.MaxComputeDBWriter(conn, table_name, table_schema,
+                                         buff_size)
     elif driver == "mysql":
         w = db_writer.MySQLDBWriter(conn, table_name, table_schema, buff_size)
     elif driver == "pai_maxcompute":
-        w = db_writer.PAIMaxComputeDBWriter(table_name, table_schema, buff_size)
+        w = db_writer.PAIMaxComputeDBWriter(table_name, table_schema,
+                                            buff_size)
     else:
         raise ValueError("unrecognized database driver: %s" % driver)
 

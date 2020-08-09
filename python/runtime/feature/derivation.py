@@ -35,10 +35,8 @@ def init_column_map(target_fc_map, fc):
     Returns:
         None.
     """
-    if (
-        isinstance(fc, (EmbeddingColumn, IndicatorColumn))
-        and len(fc.get_field_desc()) == 0
-    ):
+    if (isinstance(fc, (EmbeddingColumn, IndicatorColumn))
+            and len(fc.get_field_desc()) == 0):
         if fc.name not in target_fc_map:
             target_fc_map[fc.name] = []
 
@@ -113,12 +111,13 @@ def new_default_field_desc(name):
 
 
 # A regular expression to match any real number
-REAL_NUMBER_PATTERN = re.compile("((\\+|-)?([0-9]+)(\\.[0-9]+)?)|((\\+|-)?\\.?[0-9]+)")
+REAL_NUMBER_PATTERN = re.compile(
+    "((\\+|-)?([0-9]+)(\\.[0-9]+)?)|((\\+|-)?\\.?[0-9]+)")
 
 # A regular expression to match the form of "3,5,7"
 CSV_PATTERN = re.compile(
-    "((%s)\\,)+(%s)" % (REAL_NUMBER_PATTERN.pattern, REAL_NUMBER_PATTERN.pattern)
-)
+    "((%s)\\,)+(%s)" %
+    (REAL_NUMBER_PATTERN.pattern, REAL_NUMBER_PATTERN.pattern))
 
 # A regular expression to match the form of "0:3.2 7:-2.3"
 KV_PATTERN = re.compile("([0-9]+:(%s)\\s*)+" % REAL_NUMBER_PATTERN.pattern)
@@ -163,9 +162,8 @@ def fill_csv_field_desc(cell, field_desc):
     """
     values = cell.split(",")
     if field_desc.is_sparse:
-        assert (
-            field_desc.shape is not None
-        ), "the shape of CSV format data must be given"
+        assert (field_desc.shape is
+                not None), "the shape of CSV format data must be given"
     else:
         if field_desc.shape is None:
             field_desc.shape = [len(values)]
@@ -175,9 +173,8 @@ def fill_csv_field_desc(cell, field_desc):
             if size > 1:
                 raise ValueError(
                     "column %s should be csv format dense tensor "
-                    "of %d element(s), but got %d element(s)"
-                    % (field_desc.name, np.prod(field_desc.shape), len(values))
-                )
+                    "of %d element(s), but got %d element(s)" %
+                    (field_desc.name, np.prod(field_desc.shape), len(values)))
 
             field_desc.shape = [len(values)]
 
@@ -329,7 +326,8 @@ def fill_field_descs(generator, fd_map):
 
                     fill_kv_field_desc(cell, field_descs[i])
             else:
-                raise ValueError("unsupported data format {}".format(format[i]))
+                raise ValueError("unsupported data format {}".format(
+                    format[i]))
 
 
 def update_feature_column(fc, fd_map):
@@ -358,8 +356,7 @@ def update_feature_column(fc, fd_map):
         if not field_desc.is_sparse:
             assert field_desc.max_id > 0, (
                 "use dense column on embedding column "
-                "but did not got a correct MaxID"
-            )
+                "but did not got a correct MaxID")
             bucket_size = field_desc.max_id + 1
 
         fc.category_column = CategoryIDColumn(field_desc, bucket_size)
@@ -371,9 +368,8 @@ def update_feature_column(fc, fd_map):
             raise ValueError("column not found or inferred: %s" % fc.name)
 
         assert field_desc.is_sparse, "cannot use sparse column with indicator column"
-        assert (
-            field_desc.max_id > 0
-        ), "use indicator column but did not got a correct MaxID"
+        assert (field_desc.max_id >
+                0), "use indicator column but did not got a correct MaxID"
         bucket_size = field_desc.max_id + 1
         fc.category_column = CategoryIDColumn(field_desc, bucket_size)
 
@@ -392,17 +388,19 @@ def new_feature_column(field_desc):
     if field_desc.dtype != DataType.STRING:
         return NumericColumn(field_desc)
     else:
-        category_column = CategoryIDColumn(field_desc, len(field_desc.vocabulary))
+        category_column = CategoryIDColumn(field_desc,
+                                           len(field_desc.vocabulary))
         # NOTE(typhoonzero): a default embedding size of 128 is enough
         # for most cases.
-        embedding = EmbeddingColumn(
-            category_column=category_column, dimension=128, combiner="sum"
-        )
+        embedding = EmbeddingColumn(category_column=category_column,
+                                    dimension=128,
+                                    combiner="sum")
         embedding.name = field_desc.name
         return embedding
 
 
-def derive_feature_columns(targets, fc_map, fd_map, selected_field_names, label_name):
+def derive_feature_columns(targets, fc_map, fd_map, selected_field_names,
+                           label_name):
     """
     Derive the FeatureColumn.
 
@@ -434,26 +432,24 @@ def derive_feature_columns(targets, fc_map, fd_map, selected_field_names, label_
                 continue
 
             if len(fc_map) > 1:
-                raise ValueError("cannot expand '%s' in COLUMN clause", field_name)
+                raise ValueError("cannot expand '%s' in COLUMN clause",
+                                 field_name)
 
             field_pattern = re.compile(field_name, flags=re.I)
             match_field_name = None
             for selected_field_name in selected_field_names:
                 if field_pattern.fullmatch(selected_field_name):
                     assert match_field_name is None, (
-                        "%s matches duplicate fields" % field_name
-                    )
+                        "%s matches duplicate fields" % field_name)
                     match_field_name = selected_field_name
 
             if match_field_name is None:
                 raise ValueError(
                     "'%s' in COLUMN clause does not match any selected fields"
-                    % field_name
-                )
+                    % field_name)
 
-            new_fc = fc_target_map[match_field_name][0].new_feature_column_from(
-                fd_map[match_field_name]
-            )
+            new_fc = fc_target_map[match_field_name][
+                0].new_feature_column_from(fd_map[match_field_name])
             new_fc_target_map[match_field_name] = [new_fc]
             del fd_map[field_name]
 
@@ -475,9 +471,8 @@ def derive_feature_columns(targets, fc_map, fd_map, selected_field_names, label_
 
                 field_desc = fd_map[selected_field_name]
                 if field_desc is None:
-                    raise ValueError(
-                        "column not found or inferred: %s" % selected_field_name
-                    )
+                    raise ValueError("column not found or inferred: %s" %
+                                     selected_field_name)
                 new_fc = new_feature_column(field_desc)
                 new_fc_target_map[selected_field_name] = [new_fc]
 
@@ -485,7 +480,8 @@ def derive_feature_columns(targets, fc_map, fd_map, selected_field_names, label_
         fc_target_map.update(new_fc_target_map)
 
 
-def update_ir_feature_columns(features, fc_map, selected_field_names, label_name):
+def update_ir_feature_columns(features, fc_map, selected_field_names,
+                              label_name):
     """
     Update the IR FeatureColumn map `features` by the derived FeatureColumn map
     `fc_map` . If any FeatureColumn inside `fc_map` does not exist in
@@ -518,7 +514,8 @@ def update_ir_feature_columns(features, fc_map, selected_field_names, label_name
 
             fc_list = target_fc_map[field_name]
             if fc_list is None:
-                raise ValueError("column not found or inferred: %s" % field_name)
+                raise ValueError("column not found or inferred: %s" %
+                                 field_name)
 
             for fc in fc_list:
                 if fc not in new_fc_list:
@@ -546,9 +543,8 @@ def update_ir_feature_columns(features, fc_map, selected_field_names, label_name
                         break
 
                 if not found:
-                    raise ValueError(
-                        "some feature column is missing in the " "derivation stage"
-                    )
+                    raise ValueError("some feature column is missing in the "
+                                     "derivation stage")
 
             sorted_pos = sorted(range(len(indices)), key=lambda k: indices[k])
             multi_fd_fcs = [multi_fd_fcs[i] for i in sorted_pos]
@@ -577,8 +573,7 @@ def derive_label(label, fd_map):
 
     label_field_desc = fd_map[label_name]
     assert label_field_desc is not None, (
-        "deriveLabel: LABEL COLUMN '%s' not found" % label_name
-    )
+        "deriveLabel: LABEL COLUMN '%s' not found" % label_name)
 
     # use shape [] if label shape is [1] for TensorFlow scalar label
     # shape should be [].
@@ -618,8 +613,7 @@ def infer_feature_columns(conn, select, features, label, n=1000):
 
     selected_field_names = generator.field_names
     assert len(set(selected_field_names)) == len(
-        selected_field_names
-    ), "duplicate selected field names"
+        selected_field_names), "duplicate selected field names"
 
     for name in selected_field_names:
         if name not in fd_map:
@@ -632,10 +626,10 @@ def infer_feature_columns(conn, select, features, label, n=1000):
     if not targets:
         targets.append("feature_columns")
 
-    derive_feature_columns(targets, fc_map, fd_map, selected_field_names, label_name)
-    features = update_ir_feature_columns(
-        features, fc_map, selected_field_names, label_name
-    )
+    derive_feature_columns(targets, fc_map, fd_map, selected_field_names,
+                           label_name)
+    features = update_ir_feature_columns(features, fc_map,
+                                         selected_field_names, label_name)
     label = derive_label(label, fd_map)
     return features, label
 

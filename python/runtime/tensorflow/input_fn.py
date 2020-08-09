@@ -31,7 +31,8 @@ def parse_sparse_feature(features, label, feature_column_names, feature_metas):
     return features_dict, label
 
 
-def parse_sparse_feature_predict(features, feature_column_names, feature_metas):
+def parse_sparse_feature_predict(features, feature_column_names,
+                                 feature_metas):
     features_dict = {}
     for idx, col in enumerate(features):
         name = feature_column_names[idx]
@@ -56,11 +57,11 @@ def get_dtype(type_str):
 def tf_generator(gen, selected_cols, feature_column_names, feature_metas):
     def reader():
         for row, label in gen():
-            features = db.read_features_from_row(
-                row, selected_cols, feature_column_names, feature_metas
-            )
+            features = db.read_features_from_row(row, selected_cols,
+                                                 feature_column_names,
+                                                 feature_metas)
             if label is None:
-                yield (features,)
+                yield (features, )
             else:
                 yield (features, label)
 
@@ -68,15 +69,15 @@ def tf_generator(gen, selected_cols, feature_column_names, feature_metas):
 
 
 def input_fn(
-    select,
-    datasource,
-    feature_column_names,
-    feature_metas,
-    label_meta,
-    is_pai=False,
-    pai_table="",
-    num_workers=1,
-    worker_id=0,
+        select,
+        datasource,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        is_pai=False,
+        pai_table="",
+        num_workers=1,
+        worker_id=0,
 ):
     feature_types = []
     shapes = []
@@ -107,9 +108,8 @@ def input_fn(
 
     # Clustering model do not have label
     if not label_meta or label_meta["feature_name"] == "":
-        dataset = tf.data.Dataset.from_generator(
-            gen, (tuple(feature_types),), (tuple(shapes),)
-        )
+        dataset = tf.data.Dataset.from_generator(gen, (tuple(feature_types), ),
+                                                 (tuple(shapes), ))
         ds_mapper = functools.partial(
             parse_sparse_feature_predict,
             feature_column_names=feature_column_names,
@@ -135,9 +135,9 @@ def read_feature_as_tensor(raw_val, feature_spec, feature_name):
         return [raw_val]
     if feature_spec["is_sparse"]:
         indices = tf.strings.to_number(
-            tf.strings.split(
-                raw_val, feature_spec["delimiter"], result_type="RaggedTensor"
-            ),
+            tf.strings.split(raw_val,
+                             feature_spec["delimiter"],
+                             result_type="RaggedTensor"),
             tf.int64,
         )
         values = tf.fill(tf.shape(indices), 1)
@@ -146,9 +146,9 @@ def read_feature_as_tensor(raw_val, feature_spec, feature_name):
         return (indices, values, dense_shape)
     else:  # Dense string vector
         return tf.strings.to_number(
-            tf.strings.split(
-                raw_val, feature_spec["delimiter"], result_type="RaggedTensor"
-            ),
+            tf.strings.split(raw_val,
+                             feature_spec["delimiter"],
+                             result_type="RaggedTensor"),
             feature_spec["dtype"],
         )
 
@@ -163,9 +163,9 @@ def parse_pai_dataset(feature_column_names, label_meta, feature_metas, *row):
     if label_meta and label_meta["delimiter"] != "":
         # FIXME(typhoonzero): the label in the yielded row may not be the last
         # item, should get label index.
-        tmp = tf.strings.split(
-            label, sep=label_meta["delimiter"], result_type="RaggedTensor"
-        )
+        tmp = tf.strings.split(label,
+                               sep=label_meta["delimiter"],
+                               result_type="RaggedTensor")
         if label_meta["dtype"] == "float32":
             label = tf.strings.to_number(tmp, out_type=tf.dtypes.float32)
         elif label_meta["dtype"] == "int64":
@@ -174,12 +174,16 @@ def parse_pai_dataset(feature_column_names, label_meta, feature_metas, *row):
     return features, label
 
 
-def pai_dataset(
-    table, feature_column_names, label_meta, feature_metas, slice_id=0, slice_count=1
-):
+def pai_dataset(table,
+                feature_column_names,
+                label_meta,
+                feature_metas,
+                slice_id=0,
+                slice_count=1):
     selected_cols = copy.copy(feature_column_names)
     dtypes = [
-        "string" if feature_metas[n]["delimiter"] else feature_metas[n]["dtype"]
+        "string"
+        if feature_metas[n]["delimiter"] else feature_metas[n]["dtype"]
         for n in feature_column_names
     ]
     if label_meta and label_meta["feature_name"]:
@@ -197,28 +201,26 @@ def pai_dataset(
         selected_cols=",".join(selected_cols),
         slice_id=slice_id,
         slice_count=slice_count,
-        capacity=2 ** 25,
+        capacity=2**25,
         num_threads=64,
     ).map(
-        functools.partial(
-            parse_pai_dataset, feature_column_names, label_meta, feature_metas
-        )
-    )
+        functools.partial(parse_pai_dataset, feature_column_names, label_meta,
+                          feature_metas))
 
 
 def get_dataset_fn(
-    select,
-    datasource,
-    feature_column_names,
-    feature_metas,
-    label_meta,
-    is_pai,
-    pai_table,
-    batch_size,
-    epochs=1,
-    shuffle_size=None,
-    num_workers=1,
-    worker_id=0,
+        select,
+        datasource,
+        feature_column_names,
+        feature_metas,
+        label_meta,
+        is_pai,
+        pai_table,
+        batch_size,
+        epochs=1,
+        shuffle_size=None,
+        num_workers=1,
+        worker_id=0,
 ):
     def dataset_input_fn():
         dataset = input_fn(

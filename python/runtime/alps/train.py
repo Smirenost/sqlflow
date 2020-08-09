@@ -45,36 +45,35 @@ sample_engine_config = {
 
 
 def train(
-    model_builder,
-    odps_conf=None,
-    project="",
-    train_table="",
-    eval_table="",
-    features=[],
-    labels=[],
-    feature_map_table="",
-    feature_map_partition="",
-    epochs=1,
-    batch_size=1,
-    shuffle=False,
-    shuffle_bufsize=0,
-    cache_file="",
-    max_steps=None,
-    eval_steps=None,
-    eval_batch_size=1,
-    eval_start_delay=120,
-    eval_throttle=600,
-    drop_remainder=True,
-    export_path="",
-    scratch_dir="",
-    user_id="",
-    engine_config={"name": "LocalEngine"},
-    exit_on_submit=False,
+        model_builder,
+        odps_conf=None,
+        project="",
+        train_table="",
+        eval_table="",
+        features=[],
+        labels=[],
+        feature_map_table="",
+        feature_map_partition="",
+        epochs=1,
+        batch_size=1,
+        shuffle=False,
+        shuffle_bufsize=0,
+        cache_file="",
+        max_steps=None,
+        eval_steps=None,
+        eval_batch_size=1,
+        eval_start_delay=120,
+        eval_throttle=600,
+        drop_remainder=True,
+        export_path="",
+        scratch_dir="",
+        user_id="",
+        engine_config={"name": "LocalEngine"},
+        exit_on_submit=False,
 ):
     if feature_map_table != "":
-        feature_map = FeatureMap(
-            table=feature_map_table, partition=feature_map_partition
-        )
+        feature_map = FeatureMap(table=feature_map_table,
+                                 partition=feature_map_partition)
     else:
         feature_map = None
 
@@ -121,23 +120,19 @@ def train(
         engine = YarnEngine(
             cluster=engine_config["cluster"],
             queue=engine_config["queue"],
-            ps=ResourceConf(
-                memory=engine_config["ps_mem"], num=engine_config["ps_num"]
-            ),
-            worker=ResourceConf(
-                memory=engine_config["worker_mem"], num=engine_config["worker_num"]
-            ),
+            ps=ResourceConf(memory=engine_config["ps_mem"],
+                            num=engine_config["ps_num"]),
+            worker=ResourceConf(memory=engine_config["worker_mem"],
+                                num=engine_config["worker_num"]),
         )
     elif engine_config["name"] == "KubemakerEngine":
         engine = KubemakerEngine(
             cluster=engine_config["cluster"],
             queue=engine_config["queue"],
-            ps=ResourceConf(
-                memory=engine_config["ps_mem"], num=engine_config["ps_num"]
-            ),
-            worker=ResourceConf(
-                memory=engine_config["worker_mem"], num=engine_config["worker_num"]
-            ),
+            ps=ResourceConf(memory=engine_config["ps_mem"],
+                            num=engine_config["ps_num"]),
+            worker=ResourceConf(memory=engine_config["worker_mem"],
+                                num=engine_config["worker_num"]),
         )
     else:
         print("unknown engine type: %s" % engine_config["name"])
@@ -147,7 +142,9 @@ def train(
         user=user_id,
         engine=engine,
         train=TrainConf(
-            input=trainDs, max_steps=max_steps, keep_checkpoint_max=keep_checkpoint_max,
+            input=trainDs,
+            max_steps=max_steps,
+            keep_checkpoint_max=keep_checkpoint_max,
         ),
         eval=EvalConf(
             input=evalDs,
