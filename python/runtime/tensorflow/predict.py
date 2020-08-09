@@ -20,14 +20,11 @@ from runtime import db
 from runtime.import_model import import_model
 from runtime.tensorflow.get_tf_model_type import is_tf_estimator
 from runtime.tensorflow.get_tf_version import tf_is_version2
-from runtime.tensorflow.input_fn import (
-    get_dtype,
-    parse_sparse_feature_predict,
-    tf_generator,
-)
-from runtime.tensorflow.keras_with_feature_column_input import (
-    init_model_with_feature_column,
-)
+from runtime.tensorflow.input_fn import (get_dtype,
+                                         parse_sparse_feature_predict,
+                                         tf_generator)
+from runtime.tensorflow.keras_with_feature_column_input import \
+    init_model_with_feature_column
 
 # Disable TensorFlow INFO and WARNING logs
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"

@@ -18,22 +18,11 @@ from unittest import TestCase
 import numpy as np
 import runtime.testing as testing
 from odps import tunnel
-from runtime.db import (
-    MYSQL_FIELD_TYPE_DICT,
-    buffered_db_writer,
-    connect,
-    connect_with_data_source,
-    db_generator,
-    get_table_schema,
-    limit_select,
-    parseHiveDSN,
-    parseMaxComputeDSN,
-    parseMySQLDSN,
-    query,
-    read_feature,
-    read_features_from_row,
-    selected_columns_and_types,
-)
+from runtime.db import (MYSQL_FIELD_TYPE_DICT, buffered_db_writer, connect,
+                        connect_with_data_source, db_generator,
+                        get_table_schema, limit_select, parseHiveDSN,
+                        parseMaxComputeDSN, parseMySQLDSN, query, read_feature,
+                        read_features_from_row, selected_columns_and_types)
 
 
 def _execute_maxcompute(conn, statement):

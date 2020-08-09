@@ -13,16 +13,10 @@
 
 import numpy as np
 import six
-from runtime.feature.column import (
-    BucketColumn,
-    CategoryHashColumn,
-    CategoryIDColumn,
-    CrossColumn,
-    EmbeddingColumn,
-    IndicatorColumn,
-    NumericColumn,
-    SeqCategoryIDColumn,
-)
+from runtime.feature.column import (BucketColumn, CategoryHashColumn,
+                                    CategoryIDColumn, CrossColumn,
+                                    EmbeddingColumn, IndicatorColumn,
+                                    NumericColumn, SeqCategoryIDColumn)
 from runtime.feature.field_desc import DataType
 from runtime.model import EstimatorType
 

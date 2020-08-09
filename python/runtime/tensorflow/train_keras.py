@@ -20,9 +20,8 @@ import tensorflow as tf
 from runtime.model_metadata import save_model_metadata
 from runtime.tensorflow import metrics
 from runtime.tensorflow.get_tf_version import tf_is_version2
-from runtime.tensorflow.keras_with_feature_column_input import (
-    init_model_with_feature_column,
-)
+from runtime.tensorflow.keras_with_feature_column_input import \
+    init_model_with_feature_column
 
 
 def keras_compile(estimator, model_params, save, metric_names):

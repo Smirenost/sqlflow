@@ -18,15 +18,11 @@ from runtime import oss
 from runtime.import_model import import_model
 from runtime.pai.pai_distributed import define_tf_flags
 from runtime.tensorflow import is_tf_estimator
-from runtime.tensorflow.evaluate import (
-    estimator_evaluate,
-    keras_evaluate,
-    write_result_metrics,
-)
+from runtime.tensorflow.evaluate import (estimator_evaluate, keras_evaluate,
+                                         write_result_metrics)
 from runtime.tensorflow.input_fn import get_dataset_fn
-from runtime.tensorflow.keras_with_feature_column_input import (
-    init_model_with_feature_column,
-)
+from runtime.tensorflow.keras_with_feature_column_input import \
+    init_model_with_feature_column
 from runtime.tensorflow.set_log_level import set_log_level
 
 try:

@@ -18,13 +18,11 @@ import os
 import shutil
 
 import tensorflow as tf
-
 # pylint: disable=E0401
 # need to import GroupedSparseColumn, SparseColumn when it's used
 from alps.framework.column.column import DenseColumn
 from alps.framework.experiment import EstimatorBuilder
 from alps.io.base import OdpsConf
-
 # pylint: enable=E0401
 from runtime.alps.train import train
 from runtime.tensorflow.get_tf_version import tf_is_version2

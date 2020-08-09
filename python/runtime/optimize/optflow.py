@@ -20,13 +20,9 @@ import oss2
 import requests
 import six
 from runtime.optimize.model_generation import (
-    assert_are_valid_tokens,
-    find_matched_aggregation_function_brackets,
-    generate_objective_and_constraint_expr,
-    try_convert_comparision_token,
-    try_convert_to_aggregation_function,
-    update_by_column_names,
-)
+    assert_are_valid_tokens, find_matched_aggregation_function_brackets,
+    generate_objective_and_constraint_expr, try_convert_comparision_token,
+    try_convert_to_aggregation_function, update_by_column_names)
 from runtime.oss import get_bucket
 
 __all__ = [

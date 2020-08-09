@@ -15,9 +15,7 @@ import tensorflow as tf
 from runtime import oss
 from runtime.model_metadata import save_model_metadata
 from runtime.pai.pai_distributed import (
-    dump_into_tf_config,
-    make_distributed_info_without_evaluator,
-)
+    dump_into_tf_config, make_distributed_info_without_evaluator)
 from runtime.seeding import get_tf_random_seed
 from runtime.tensorflow.train_estimator import estimator_train_compiled
 from runtime.tensorflow.train_keras import keras_compile, keras_train_compiled

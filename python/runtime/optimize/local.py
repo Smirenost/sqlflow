@@ -20,9 +20,7 @@ import runtime.db as db
 import runtime.verifier as verifier
 import six
 from runtime.optimize.model_generation import (
-    generate_objective_and_constraint_expr,
-    generate_unique_result_value_name,
-)
+    generate_objective_and_constraint_expr, generate_unique_result_value_name)
 
 # FIXME(sneaxiy): do not know why Pyomo requires that the data frame must be
 # a global variable
