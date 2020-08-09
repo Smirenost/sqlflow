@@ -95,10 +95,7 @@ class Connection(object):
     def __init__(self, conn_uri):
         self.uristr = conn_uri
         self.uripts = self._parse_uri()
-        self.params = parse_qs(
-            self.uripts.query,
-            keep_blank_values=True,
-        )
+        self.params = parse_qs(self.uripts.query, keep_blank_values=True,)
         for k, l in self.params.items():
             if len(l) == 1:
                 self.params[k] = l[0]

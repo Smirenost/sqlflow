@@ -20,13 +20,15 @@ import runtime.feature.field_desc as fd
 
 class TestFeatureColumn(unittest.TestCase):
     def new_field_desc(self):
-        return fd.FieldDesc(name="my_feature",
-                            dtype=fd.DataType.FLOAT,
-                            delimiter=",",
-                            format=fd.DataFormat.CSV,
-                            shape=[10],
-                            is_sparse=True,
-                            vocabulary=["a", "b", "c"])
+        return fd.FieldDesc(
+            name="my_feature",
+            dtype=fd.DataType.FLOAT,
+            delimiter=",",
+            format=fd.DataFormat.CSV,
+            shape=[10],
+            is_sparse=True,
+            vocabulary=["a", "b", "c"],
+        )
 
     def check_serialize(self, feature_column):
         d = fc.FeatureColumn.to_dict(feature_column)
@@ -37,8 +39,7 @@ class TestFeatureColumn(unittest.TestCase):
         self.assertEqual(typ.__name__, d["type"])
         self.assertEqual(d, new_d)
 
-        dump_json = json.dumps(feature_column,
-                               cls=fc.JSONEncoderWithFeatureColumn)
+        dump_json = json.dumps(feature_column, cls=fc.JSONEncoderWithFeatureColumn)
         new_fc = json.loads(dump_json, cls=fc.JSONDecoderWithFeatureColumn)
         new_d = fc.FeatureColumn.to_dict(new_fc)
         self.assertEqual(type(feature_column), type(new_fc))
@@ -78,8 +79,9 @@ class TestFeatureColumn(unittest.TestCase):
         self.assertTrue(isinstance(nc2, fc.NumericColumn))
         self.assertEqual(len(nc1.get_field_desc()), 1)
         self.assertEqual(len(nc2.get_field_desc()), 1)
-        self.assertEqual(nc1.get_field_desc()[0].to_json(),
-                         nc2.get_field_desc()[0].to_json())
+        self.assertEqual(
+            nc1.get_field_desc()[0].to_json(), nc2.get_field_desc()[0].to_json()
+        )
 
         d1 = fc.FeatureColumn.to_dict(nc1)
         self.assertEqual(d1["type"], "NumericColumn")
@@ -105,8 +107,9 @@ class TestFeatureColumn(unittest.TestCase):
         self.assertEqual(d["type"], "BucketColumn")
         self.assertEqual(d["value"]["boundaries"], boundaries)
         self.assertEqual(d["value"]["source_column"]["type"], "NumericColumn")
-        self.assertEqual(d["value"]["source_column"]["value"]["field_desc"],
-                         desc.to_dict())
+        self.assertEqual(
+            d["value"]["source_column"]["value"]["field_desc"], desc.to_dict()
+        )
         self.check_serialize(bc)
 
         bc = bc.new_feature_column_from(desc)
@@ -119,8 +122,9 @@ class TestFeatureColumn(unittest.TestCase):
         self.assertEqual(d["type"], "BucketColumn")
         self.assertEqual(d["value"]["boundaries"], boundaries)
         self.assertEqual(d["value"]["source_column"]["type"], "NumericColumn")
-        self.assertEqual(d["value"]["source_column"]["value"]["field_desc"],
-                         desc.to_dict())
+        self.assertEqual(
+            d["value"]["source_column"]["value"]["field_desc"], desc.to_dict()
+        )
         self.check_serialize(bc)
 
     def test_category_column(self):
@@ -128,8 +132,9 @@ class TestFeatureColumn(unittest.TestCase):
         bucket_size = 13
 
         for fc_class in [
-                fc.CategoryIDColumn, fc.CategoryHashColumn,
-                fc.SeqCategoryIDColumn
+            fc.CategoryIDColumn,
+            fc.CategoryHashColumn,
+            fc.SeqCategoryIDColumn,
         ]:
             cc = fc_class(desc, bucket_size)
             self.assertEqual(cc.num_class(), bucket_size)
@@ -158,12 +163,12 @@ class TestFeatureColumn(unittest.TestCase):
         desc = self.new_field_desc()
         nc = fc.NumericColumn(desc)
         hash_bucket_size = 1024
-        cc = fc.CrossColumn([nc, 'cross_feature_2'], hash_bucket_size)
+        cc = fc.CrossColumn([nc, "cross_feature_2"], hash_bucket_size)
         self.assertEqual(cc.num_class(), hash_bucket_size)
         descs = cc.get_field_desc()
         self.assertEqual(len(descs), 2)
         self.assertEqual(descs[0].to_json(), desc.to_json())
-        self.assertEqual(descs[1].name, 'cross_feature_2')
+        self.assertEqual(descs[1].name, "cross_feature_2")
 
         d = fc.FeatureColumn.to_dict(cc)
         self.assertEqual(d["type"], "CrossColumn")
@@ -192,13 +197,15 @@ class TestFeatureColumn(unittest.TestCase):
             d = fc.FeatureColumn.to_dict(fc1)
             self.assertEqual(d["type"], fc_class.__name__)
             self.assertEqual(d["value"]["name"], "")
-            self.assertEqual(d["value"]["category_column"]["type"],
-                             "CategoryHashColumn")
             self.assertEqual(
-                d["value"]["category_column"]["value"]["field_desc"],
-                desc.to_dict())
+                d["value"]["category_column"]["type"], "CategoryHashColumn"
+            )
             self.assertEqual(
-                d["value"]["category_column"]["value"]["bucket_size"], 4096)
+                d["value"]["category_column"]["value"]["field_desc"], desc.to_dict()
+            )
+            self.assertEqual(
+                d["value"]["category_column"]["value"]["bucket_size"], 4096
+            )
             self.check_serialize(fc1)
 
             fc2 = fc_class(category_column=None, name="my_category_column")
@@ -216,5 +223,5 @@ class TestFeatureColumn(unittest.TestCase):
             self.check_serialize(fc2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -15,19 +15,33 @@ import tensorflow as tf
 from runtime import oss
 from runtime.model_metadata import save_model_metadata
 from runtime.pai.pai_distributed import (
-    dump_into_tf_config, make_distributed_info_without_evaluator)
+    dump_into_tf_config,
+    make_distributed_info_without_evaluator,
+)
 from runtime.seeding import get_tf_random_seed
 from runtime.tensorflow.train_estimator import estimator_train_compiled
 from runtime.tensorflow.train_keras import keras_compile, keras_train_compiled
 
 
-def keras_train_and_save(estimator, model_params, save, FLAGS,
-                         train_dataset_fn, val_dataset_fn, label_meta, epochs,
-                         verbose, metric_names, validation_steps,
-                         load_pretrained_model, model_meta):
+def keras_train_and_save(
+    estimator,
+    model_params,
+    save,
+    FLAGS,
+    train_dataset_fn,
+    val_dataset_fn,
+    label_meta,
+    epochs,
+    verbose,
+    metric_names,
+    validation_steps,
+    load_pretrained_model,
+    model_meta,
+):
     print("Start training using keras model...")
-    classifier, has_none_optimizer = keras_compile(estimator, model_params,
-                                                   save, metric_names)
+    classifier, has_none_optimizer = keras_compile(
+        estimator, model_params, save, metric_names
+    )
     train_dataset = train_dataset_fn()
     validate_dataset = val_dataset_fn() if val_dataset_fn is not None else None
     if load_pretrained_model:
@@ -37,12 +51,28 @@ def keras_train_and_save(estimator, model_params, save, FLAGS,
         classifier.load_weights(save)
 
     if len(FLAGS.worker_hosts.split(",")) > 1:
-        keras_train_distributed(classifier, model_params, save, model_meta,
-                                FLAGS, train_dataset_fn, val_dataset_fn)
+        keras_train_distributed(
+            classifier,
+            model_params,
+            save,
+            model_meta,
+            FLAGS,
+            train_dataset_fn,
+            val_dataset_fn,
+        )
     else:
-        keras_train_compiled(classifier, save, train_dataset, validate_dataset,
-                             label_meta, epochs, verbose, model_meta,
-                             validation_steps, has_none_optimizer)
+        keras_train_compiled(
+            classifier,
+            save,
+            train_dataset,
+            validate_dataset,
+            label_meta,
+            epochs,
+            verbose,
+            model_meta,
+            validation_steps,
+            has_none_optimizer,
+        )
 
     print("saving keras model to: %s" % FLAGS.sqlflow_oss_modeldir)
     if len(FLAGS.worker_hosts.split(",")) > 1:
@@ -52,30 +82,32 @@ def keras_train_and_save(estimator, model_params, save, FLAGS,
     oss.save_file(FLAGS.sqlflow_oss_modeldir, "model_meta.json")
 
 
-def keras_train_distributed(classifier,
-                            model_params,
-                            save,
-                            model_meta,
-                            FLAGS,
-                            train_dataset_fn,
-                            val_dataset_fn,
-                            is_pai=True):
+def keras_train_distributed(
+    classifier,
+    model_params,
+    save,
+    model_meta,
+    FLAGS,
+    train_dataset_fn,
+    val_dataset_fn,
+    is_pai=True,
+):
     # train keras model distributed
-    cluster, task_type, task_index = make_distributed_info_without_evaluator(
-        FLAGS)
+    cluster, task_type, task_index = make_distributed_info_without_evaluator(FLAGS)
     dump_into_tf_config(cluster, task_type, task_index)
     dist_strategy = tf.contrib.distribute.ParameterServerStrategy()
 
-    run_config = tf.estimator.RunConfig(tf_random_seed=get_tf_random_seed(),
-                                        save_checkpoints_steps=100,
-                                        train_distribute=dist_strategy,
-                                        session_config=tf.ConfigProto(
-                                            log_device_placement=True,
-                                            device_filters=None))
+    run_config = tf.estimator.RunConfig(
+        tf_random_seed=get_tf_random_seed(),
+        save_checkpoints_steps=100,
+        train_distribute=dist_strategy,
+        session_config=tf.ConfigProto(log_device_placement=True, device_filters=None),
+    )
     model_dir = FLAGS.checkpointDir
 
     keras_estimator = tf.keras.estimator.model_to_estimator(
-        classifier, model_dir=model_dir, config=run_config)
+        classifier, model_dir=model_dir, config=run_config
+    )
     estimator_train_compiled(
         keras_estimator,
         train_dataset_fn,
@@ -84,21 +116,26 @@ def keras_train_distributed(classifier,
         100,
         None,
         60,
-        120)
+        120,
+    )
     # FIXME(typhoonzero): predict keras distributed model should
     # also call model_to_estimator.
     # export saved model for prediction
     if "feature_columns" in model_params:
         all_feature_columns = model_params["feature_columns"]
-    elif "linear_feature_columns" in model_params \
-            and "dnn_feature_columns" in model_params:
+    elif (
+        "linear_feature_columns" in model_params
+        and "dnn_feature_columns" in model_params
+    ):
         import copy
+
         all_feature_columns = copy.copy(model_params["linear_feature_columns"])
         all_feature_columns.extend(model_params["dnn_feature_columns"])
     else:
         raise Exception("No expected feature columns in model params")
     serving_input_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(  # noqa: E501
-        tf.feature_column.make_parse_example_spec(all_feature_columns))
+        tf.feature_column.make_parse_example_spec(all_feature_columns)
+    )
     export_path = keras_estimator.export_saved_model(save, serving_input_fn)
 
     # write the path under current directory

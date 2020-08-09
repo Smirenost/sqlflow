@@ -20,8 +20,9 @@ import tensorflow as tf
 from runtime.model_metadata import save_model_metadata
 from runtime.tensorflow import metrics
 from runtime.tensorflow.get_tf_version import tf_is_version2
-from runtime.tensorflow.keras_with_feature_column_input import \
-    init_model_with_feature_column
+from runtime.tensorflow.keras_with_feature_column_input import (
+    init_model_with_feature_column,
+)
 
 
 def keras_compile(estimator, model_params, save, metric_names):
@@ -64,7 +65,7 @@ def keras_compile(estimator, model_params, save, metric_names):
                 optimizer = classifier_pkg.optimizer()
                 if optimizer is None:
                     has_none_optimizer = True
-                    warnings.warn('optimizer() returns None')
+                    warnings.warn("optimizer() returns None")
 
     if loss is None:
         members = inspect.getmembers(classifier_pkg)
@@ -76,7 +77,8 @@ def keras_compile(estimator, model_params, save, metric_names):
                 loss = classifier_pkg.loss
 
     classifier = init_model_with_feature_column(
-        estimator, model_params, has_none_optimizer=has_none_optimizer)
+        estimator, model_params, has_none_optimizer=has_none_optimizer
+    )
 
     # FIXME(sneaxiy): some models defined by other framework (not TensorFlow or
     # XGBoost) may return None optimizer.
@@ -84,31 +86,43 @@ def keras_compile(estimator, model_params, save, metric_names):
     # https://github.com/sql-machine-learning/models/blob/ce970d14a524e20de10a645c99b6bf8724be17d9/sqlflow_models/arima_with_stl_decomposition.py#L123  # noqa: E501
     if has_none_optimizer:
         assert hasattr(
-            classifier,
-            "sqlflow_train_loop"), "optimizer() should not return None"
+            classifier, "sqlflow_train_loop"
+        ), "optimizer() should not return None"
     else:
-        classifier.compile(optimizer=optimizer,
-                           loss=loss,
-                           metrics=keras_metrics)
+        classifier.compile(optimizer=optimizer, loss=loss, metrics=keras_metrics)
 
     return classifier, has_none_optimizer
 
 
-def keras_train_and_save(estimator, model_params, save, is_pai,
-                         train_dataset_fn, val_dataset_fn, label_meta, epochs,
-                         verbose, metric_names, validation_steps,
-                         load_pretrained_model, model_meta):
+def keras_train_and_save(
+    estimator,
+    model_params,
+    save,
+    is_pai,
+    train_dataset_fn,
+    val_dataset_fn,
+    label_meta,
+    epochs,
+    verbose,
+    metric_names,
+    validation_steps,
+    load_pretrained_model,
+    model_meta,
+):
     print("Start training using keras model...")
     try:
-        classifier, has_none_optimizer = keras_compile(estimator, model_params,
-                                                       save, metric_names)
+        classifier, has_none_optimizer = keras_compile(
+            estimator, model_params, save, metric_names
+        )
     except Exception as e:
         if hasattr(estimator, "sqlflow_train_loop"):
             sys.stderr.write(
                 "compile keras model failed, ignoring this error "
-                "since the model seems to defined sqlflow_train_loop.")
+                "since the model seems to defined sqlflow_train_loop."
+            )
             classifier = init_model_with_feature_column(
-                estimator, model_params, has_none_optimizer=True)
+                estimator, model_params, has_none_optimizer=True
+            )
             has_none_optimizer = True
         else:
             raise e
@@ -124,15 +138,33 @@ def keras_train_and_save(estimator, model_params, save, is_pai,
         # training, or let users to write the same WITH statements in SQL?
         classifier.load_weights(save)
 
-    keras_train_compiled(classifier, save, train_dataset, validate_dataset,
-                         label_meta, epochs, verbose, model_meta,
-                         validation_steps, has_none_optimizer)
+    keras_train_compiled(
+        classifier,
+        save,
+        train_dataset,
+        validate_dataset,
+        label_meta,
+        epochs,
+        verbose,
+        model_meta,
+        validation_steps,
+        has_none_optimizer,
+    )
 
 
-def keras_train_compiled(classifier, save, train_dataset, validate_dataset,
-                         label_meta, epochs, verbose, model_meta,
-                         validation_steps, has_none_optimizer):
-    if hasattr(classifier, 'sqlflow_train_loop'):
+def keras_train_compiled(
+    classifier,
+    save,
+    train_dataset,
+    validate_dataset,
+    label_meta,
+    epochs,
+    verbose,
+    model_meta,
+    validation_steps,
+    has_none_optimizer,
+):
+    if hasattr(classifier, "sqlflow_train_loop"):
         classifier.sqlflow_train_loop(train_dataset)
     else:
         if label_meta["feature_name"] != "":
@@ -144,18 +176,20 @@ def keras_train_compiled(classifier, save, train_dataset, validate_dataset,
             else:
                 if validate_dataset is None:
                     validation_steps = None
-            history = classifier.fit(train_dataset,
-                                     validation_steps=validation_steps,
-                                     epochs=epochs if epochs else
-                                     classifier.default_training_epochs(),
-                                     validation_data=validate_dataset,
-                                     verbose=verbose)
+            history = classifier.fit(
+                train_dataset,
+                validation_steps=validation_steps,
+                epochs=epochs if epochs else classifier.default_training_epochs(),
+                validation_data=validate_dataset,
+                verbose=verbose,
+            )
         else:
-            history = classifier.fit(train_dataset,
-                                     validation_steps=validation_steps,
-                                     epochs=epochs if epochs else
-                                     classifier.default_training_epochs(),
-                                     verbose=verbose)
+            history = classifier.fit(
+                train_dataset,
+                validation_steps=validation_steps,
+                epochs=epochs if epochs else classifier.default_training_epochs(),
+                verbose=verbose,
+            )
         train_metrics = {}
         val_metrics = {}
         for k in history.history.keys():

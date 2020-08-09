@@ -39,20 +39,22 @@ def get_bucket(name, ak=None, sk=None, endpoint=None):
     if endpoint is None:
         endpoint = os.getenv("SQLFLOW_OSS_MODEL_ENDPOINT", "")
     if ak == "" or sk == "":
-        raise ValueError("must configure SQLFLOW_OSS_AK and SQLFLOW_OSS_SK "
-                         "when submitting to PAI")
+        raise ValueError(
+            "must configure SQLFLOW_OSS_AK and SQLFLOW_OSS_SK " "when submitting to PAI"
+        )
     if endpoint == "":
         raise ValueError(
-            "must configure SQLFLOW_OSS_MODEL_ENDPOINT when submitting to PAI")
+            "must configure SQLFLOW_OSS_MODEL_ENDPOINT when submitting to PAI"
+        )
     auth = oss2.Auth(ak, sk)
     return oss2.Bucket(auth, endpoint, name)
 
 
 def copyfileobj(source, dest, ak, sk, endpoint, bucket_name):
-    '''
+    """
     copy_file_to_oss copies alocal file (source) to an object on OSS (dest),
     overwrite if the oss object exists.
-    '''
+    """
     auth = oss2.Auth(ak, sk)
     bucket = oss2.Bucket(auth, endpoint, bucket_name)
     bucket.put_object_from_file(dest, source)
@@ -60,12 +62,12 @@ def copyfileobj(source, dest, ak, sk, endpoint, bucket_name):
 
 def get_oss_path_from_uri(oss_model_dir, file_name):
     # oss_model_dir is of format: oss://bucket/path/to/dir/
-    assert (oss_model_dir.startswith("oss://"))
+    assert oss_model_dir.startswith("oss://")
     return "/".join([oss_model_dir.rstrip("/"), file_name])
 
 
 def mkdir(bucket, oss_dir):
-    assert (oss_dir.startswith("oss://"))
+    assert oss_dir.startswith("oss://")
     if not oss_dir.endswith("/"):
         oss_dir = oss_dir + "/"
     path = remove_bucket_prefix(oss_dir)
@@ -82,9 +84,9 @@ def mkdir(bucket, oss_dir):
 
 
 def save_dir(oss_model_dir, local_dir):
-    '''
+    """
     Recursively upload local_dir under oss_model_dir
-    '''
+    """
     bucket = get_models_bucket()
     for (root, dirs, files) in os.walk(local_dir, topdown=True):
         dst_dir = "/".join([oss_model_dir.rstrip("/"), root])
@@ -111,10 +113,10 @@ def load_dir(oss_model_dir):
 
 
 def save_file(oss_model_dir, file_name):
-    '''
+    """
     Save the local file (file_name is a file under current directory)
     to OSS directory.
-    '''
+    """
     bucket = get_models_bucket()
     oss_path = get_oss_path_from_uri(oss_model_dir, file_name)
     oss_path = remove_bucket_prefix(oss_path)
@@ -124,9 +126,9 @@ def save_file(oss_model_dir, file_name):
 
 
 def save_string(oss_file_path, data):
-    '''
+    """
     Save a string into an oss_file_path
-    '''
+    """
     bucket = get_models_bucket()
     oss_dir = "/".join(oss_file_path.split("/")[:-1])
     mkdir(bucket, oss_dir)
@@ -135,9 +137,9 @@ def save_string(oss_file_path, data):
 
 
 def load_file(oss_model_dir, file_name):
-    '''
+    """
     Load file from OSS to local directory.
-    '''
+    """
     oss_file_path = "/".join([oss_model_dir.rstrip("/"), file_name])
     oss_file_path = remove_bucket_prefix(oss_file_path)
     bucket = get_models_bucket()
@@ -156,7 +158,7 @@ def load_bytes(oss_file_path):
 
 
 def save_metas(oss_model_dir, num_workers, file_name, *meta):
-    '''
+    """
     Save model descriptions like the training SQL statements to OSS directory.
     Data are saved using pickle.
     it will report "can't pickle weakref objects" when using pickle.
@@ -165,7 +167,7 @@ def save_metas(oss_model_dir, num_workers, file_name, *meta):
         *meta: python objects to be saved.
     Return:
         None
-    '''
+    """
     if num_workers > 1:
         FLAGS = tf.app.flags.FLAGS
         if FLAGS.task_index != 0:
@@ -184,7 +186,7 @@ def save_metas(oss_model_dir, num_workers, file_name, *meta):
 
 
 def load_metas(oss_model_dir, file_name):
-    '''Load model meta which are saved by save_metas from OSS
+    """Load model meta which are saved by save_metas from OSS
 
     Args:
         oss_model_dir: OSS URI that the model meta saved to.
@@ -192,7 +194,7 @@ def load_metas(oss_model_dir, file_name):
 
     Returns:
         A list contains the saved python objects
-    '''
+    """
     oss_path = "/".join([oss_model_dir.rstrip("/"), file_name])
     serialized = load_bytes(oss_path)
     return pickle.loads(serialized)
@@ -212,10 +214,18 @@ def load_oss_model(oss_model_dir, estimator):
         load_file(oss_model_dir, "model_save")
 
 
-def save_oss_model(oss_model_dir, model_name, is_estimator,
-                   feature_column_names, feature_column_names_map,
-                   feature_metas, label_meta, model_params,
-                   feature_columns_code, num_workers):
+def save_oss_model(
+    oss_model_dir,
+    model_name,
+    is_estimator,
+    feature_column_names,
+    feature_column_names_map,
+    feature_metas,
+    label_meta,
+    model_params,
+    feature_columns_code,
+    num_workers,
+):
     # Keras single node is using h5 format to save the model, no need to deal
     # with export model format. Keras distributed mode will use estimator, so
     # this is also needed.
@@ -230,6 +240,15 @@ def save_oss_model(oss_model_dir, model_name, is_estimator,
         else:
             save_file(oss_model_dir, "model_save")
 
-    save_metas(oss_model_dir, num_workers, "tensorflow_model_desc", model_name,
-               feature_column_names, feature_column_names_map, feature_metas,
-               label_meta, model_params, feature_columns_code)
+    save_metas(
+        oss_model_dir,
+        num_workers,
+        "tensorflow_model_desc",
+        model_name,
+        feature_column_names,
+        feature_column_names_map,
+        feature_metas,
+        label_meta,
+        model_params,
+        feature_columns_code,
+    )

@@ -17,12 +17,12 @@ import numpy as np
 import six
 
 __all__ = [
-    'numeric_column',
-    'bucketized_column',
-    'categorical_column_with_identity',
-    'categorical_column_with_vocabulary_list',
-    'categorical_column_with_hash_bucket',
-    'indicator_column',
+    "numeric_column",
+    "bucketized_column",
+    "categorical_column_with_identity",
+    "categorical_column_with_vocabulary_list",
+    "categorical_column_with_hash_bucket",
+    "indicator_column",
 ]
 
 # TODO(sneaxiy): implement faster and proper hash algorithm
@@ -33,10 +33,12 @@ if six.PY2:
 
     def hashing(x):
         return long(hashlib.sha1(x).hexdigest(), 16)  # noqa: F821
+
+
 else:
 
     def hashing(x):
-        return int(hashlib.sha1(x.encode('utf-8')).hexdigest(), 16)
+        return int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)
 
 
 def elementwise_transform(array, transform_fn):
@@ -46,7 +48,7 @@ def elementwise_transform(array, transform_fn):
 
 def apply_transform_on_value(feature, transform_fn):
     if len(feature) == 1:  # Dense input is like (value, )
-        return transform_fn(feature[0]),
+        return (transform_fn(feature[0]),)
     else:  # Sparse input is like (indices, values, dense_shape)
         return feature[0], transform_fn(feature[1]), feature[2]
 
@@ -68,7 +70,7 @@ class CategoricalColumnTransformer(BaseColumnTransformer):
 
 
 class NumericColumnTransformer(BaseColumnTransformer):
-    def __init__(self, key, shape=(1, )):
+    def __init__(self, key, shape=(1,)):
         self.key = key
         self.shape = shape
 
@@ -83,15 +85,16 @@ class NumericColumnTransformer(BaseColumnTransformer):
         return [self.key]
 
 
-def numeric_column(key, shape=(1, )):
+def numeric_column(key, shape=(1,)):
     return NumericColumnTransformer(key, shape)
 
 
 class BucketizedColumnTransformer(CategoricalColumnTransformer):
     def __init__(self, source_column, boundaries):
         for i in six.moves.range(len(boundaries) - 1):
-            assert boundaries[i] < boundaries[i+1], \
-                "Boundaries must be sorted in ascending order"
+            assert (
+                boundaries[i] < boundaries[i + 1]
+            ), "Boundaries must be sorted in ascending order"
         self.source_column = source_column
         self.boundaries = boundaries
 
@@ -108,7 +111,8 @@ class BucketizedColumnTransformer(CategoricalColumnTransformer):
     def __call__(self, inputs):
         return apply_transform_on_value(
             self.source_column(inputs),
-            lambda x: np.searchsorted(self.boundaries, x, side='right'))
+            lambda x: np.searchsorted(self.boundaries, x, side="right"),
+        )
 
 
 def bucketized_column(source_column, boundaries):
@@ -140,13 +144,15 @@ class CategoricalColumnWithIdentityTransformer(CategoricalColumnTransformer):
                 if self.default_value is not None:
                     return self.default_value
                 else:
-                    raise ValueError('The categorical value of column {} '
-                                     'out of range [0, {})'.format(
-                                         self.key, self.num_buckets))
+                    raise ValueError(
+                        "The categorical value of column {} "
+                        "out of range [0, {})".format(self.key, self.num_buckets)
+                    )
 
             if isinstance(slot_value, np.ndarray):
                 output = elementwise_transform(
-                    slot_value, elementwise_transform_fn).astype(np.int64)
+                    slot_value, elementwise_transform_fn
+                ).astype(np.int64)
             else:
                 output = elementwise_transform_fn(slot_value)
             return output
@@ -155,8 +161,7 @@ class CategoricalColumnWithIdentityTransformer(CategoricalColumnTransformer):
 
 
 def categorical_column_with_identity(key, num_buckets, default_value=None):
-    return CategoricalColumnWithIdentityTransformer(key, num_buckets,
-                                                    default_value)
+    return CategoricalColumnWithIdentityTransformer(key, num_buckets, default_value)
 
 
 class CategoricalColumnWithVocabularyList(CategoricalColumnTransformer):
@@ -175,7 +180,8 @@ class CategoricalColumnWithVocabularyList(CategoricalColumnTransformer):
         return len(self.vocabulary_list)
 
     def __call__(self, inputs):
-        def fn(x): return self.vocabulary_list.index(x)  # noqa: E731
+        def fn(x):
+            return self.vocabulary_list.index(x)  # noqa: E731
 
         def transform_fn(slot_value):
             if isinstance(slot_value, np.ndarray):
@@ -193,7 +199,7 @@ def categorical_column_with_vocabulary_list(key, vocabulary_list):
 
 
 class CategoricalColumnWithHashBucketTransformer(CategoricalColumnTransformer):
-    def __init__(self, key, hash_bucket_size, dtype='string'):
+    def __init__(self, key, hash_bucket_size, dtype="string"):
         self.key = key
         self.hash_bucket_size = hash_bucket_size
         self.dtype = dtype
@@ -209,7 +215,8 @@ class CategoricalColumnWithHashBucketTransformer(CategoricalColumnTransformer):
         return self.hash_bucket_size
 
     def __call__(self, inputs):
-        def fn(x): return hashing(x) % self.hash_bucket_size  # noqa: E731
+        def fn(x):
+            return hashing(x) % self.hash_bucket_size  # noqa: E731
 
         def transform_fn(slot_value):
             if isinstance(slot_value, np.ndarray):
@@ -223,17 +230,16 @@ class CategoricalColumnWithHashBucketTransformer(CategoricalColumnTransformer):
         return apply_transform_on_value(inputs[self.column_idx], transform_fn)
 
 
-def categorical_column_with_hash_bucket(key, hash_bucket_size, dtype='string'):
-    return CategoricalColumnWithHashBucketTransformer(key, hash_bucket_size,
-                                                      dtype)
+def categorical_column_with_hash_bucket(key, hash_bucket_size, dtype="string"):
+    return CategoricalColumnWithHashBucketTransformer(key, hash_bucket_size, dtype)
 
 
 class IndicatorColumnTransformer(BaseColumnTransformer):
     def __init__(self, categorical_column):
-        assert isinstance(categorical_column, CategoricalColumnTransformer), \
-            "categorical_column must be type of " \
-            "CategoricalColumnTransformer but got {}".format(
-                type(categorical_column))
+        assert isinstance(categorical_column, CategoricalColumnTransformer), (
+            "categorical_column must be type of "
+            "CategoricalColumnTransformer but got {}".format(type(categorical_column))
+        )
         self.categorical_column = categorical_column
 
     def _set_feature_column_names(self, names):
@@ -245,20 +251,19 @@ class IndicatorColumnTransformer(BaseColumnTransformer):
 
     def __call__(self, inputs):
         slot = self.categorical_column(inputs)
-        assert len(
-            slot
-        ) == 1, "indicator_column does not accept sparse categorical feature"
+        assert (
+            len(slot) == 1
+        ), "indicator_column does not accept sparse categorical feature"
 
         def transform_fn(slot_value):
             num_classes = self.categorical_column.num_classes()
             if isinstance(slot_value, np.ndarray):
-                output = np.zeros([slot_value.size, num_classes],
-                                  dtype=np.int64)
+                output = np.zeros([slot_value.size, num_classes], dtype=np.int64)
                 for i in six.moves.range(slot_value.size):
                     output[i][slot_value.take(i)] = 1
-                output = output.reshape(slot_value.shape + (num_classes, ))
+                output = output.reshape(slot_value.shape + (num_classes,))
             else:
-                output = np.zeros((num_classes, ), dtype=np.int64)
+                output = np.zeros((num_classes,), dtype=np.int64)
                 output[slot_value] = 1
 
             return output
@@ -281,10 +286,7 @@ class ComposedColumnTransformer(BaseColumnTransformer):
         self._set_feature_column_names(feature_column_names)
 
     def get_feature_column_names(self):
-        return [
-            '/'.join(column.get_feature_column_names())
-            for column in self.columns
-        ]
+        return ["/".join(column.get_feature_column_names()) for column in self.columns]
 
     def _set_feature_column_names(self, names):
         BaseColumnTransformer._set_feature_column_names(self, names)

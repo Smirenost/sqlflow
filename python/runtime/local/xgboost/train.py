@@ -29,11 +29,13 @@ def init_xgb_booster(load_pretrained_model, filename="my_model"):
     return None
 
 
-def train(train_dataset,
-          train_params,
-          model_params,
-          val_dataset=None,
-          load_pretrained_model=False):
+def train(
+    train_dataset,
+    train_params,
+    model_params,
+    val_dataset=None,
+    load_pretrained_model=False,
+):
     """ XGBoost local training API
 
     Args:
@@ -64,12 +66,14 @@ def train(train_dataset,
 
     for per_batch_dmatrix in train_dataset:
         watchlist[0] = (per_batch_dmatrix, "train")
-        bst = xgb.train(model_params,
-                        per_batch_dmatrix,
-                        evals=watchlist,
-                        evals_result=eval_result,
-                        xgb_model=bst,
-                        **train_params)
+        bst = xgb.train(
+            model_params,
+            per_batch_dmatrix,
+            evals=watchlist,
+            evals_result=eval_result,
+            xgb_model=bst,
+            **train_params
+        )
         print("Evaluation result: %s" % eval_result)
 
     return eval_result
