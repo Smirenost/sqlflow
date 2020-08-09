@@ -29,8 +29,6 @@ try:
     tf.enable_eager_execution()
 except Exception as e:
     sys.stderr.write("warning: failed to enable_eager_execution: %s" % e)
-    pass
-
 FLAGS = define_tf_flags()
 
 

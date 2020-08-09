@@ -46,7 +46,7 @@ def keras_compile(estimator, model_params, save, metric_names):
     if metric_names != ["Accuracy"]:
         keras_metrics = metrics.get_keras_metrics(metric_names)
     else:
-        if len(model_metrics) > 0:
+        if model_metrics:
             keras_metrics = model_metrics
         else:
             keras_metrics = metrics.get_keras_metrics(["Accuracy"])
@@ -114,11 +114,7 @@ def keras_train_and_save(estimator, model_params, save, is_pai,
             raise e
 
     train_dataset = train_dataset_fn()
-    if val_dataset_fn is not None:
-        validate_dataset = val_dataset_fn()
-    else:
-        validate_dataset = None
-
+    validate_dataset = val_dataset_fn() if val_dataset_fn is not None else None
     if load_pretrained_model:
         # Must run one batch to initialize parameters before load_weights
         inputs, targets = next(iter(train_dataset.take(1)))
@@ -160,8 +156,8 @@ def keras_train_compiled(classifier, save, train_dataset, validate_dataset,
                                      epochs=epochs if epochs else
                                      classifier.default_training_epochs(),
                                      verbose=verbose)
-        train_metrics = dict()
-        val_metrics = dict()
+        train_metrics = {}
+        val_metrics = {}
         for k in history.history.keys():
             if k.startswith("val_"):
                 val_metrics[k] = float(history.history[k][-1])

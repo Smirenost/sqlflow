@@ -143,10 +143,7 @@ iris_label_meta = {
                      "skip non PAI tests")
 class SubmitPAITrainTask(TestCase):
     def test_submit_pai_train_task(self):
-        model_params = dict()
-        model_params["hidden_units"] = [10, 20]
-        model_params["n_classes"] = 3
-
+        model_params = {"hidden_units": [10, 20], "n_classes": 3}
         # feature_columns_code will be used to save the training information
         # together with the saved model.
         feature_columns_code = """{"feature_columns": [

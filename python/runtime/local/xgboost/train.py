@@ -52,7 +52,7 @@ def train(train_dataset,
     """
 
     bst = init_xgb_booster(load_pretrained_model)
-    eval_result = dict()
+    eval_result = {}
     watchlist = [None]
     if val_dataset:
         # The `xgboost.train` API only accepts the XGBoost DMatrix

@@ -279,7 +279,6 @@ def generate_optflow_fsl_token_when_two_vars(token, columns, result_value_name,
         if token in columns:
             return '@input["%s"][i,j]' % token
 
-        return token
     else:
         if token == result_value_name:
             raise ValueError("result value name %s should not appear "
@@ -293,7 +292,8 @@ def generate_optflow_fsl_token_when_two_vars(token, columns, result_value_name,
 
             return '@input["%s"][%s]' % (token, non_aggregation_index)
 
-        return token
+
+    return token
 
 
 def generate_optflow_fsl_expr_when_two_vars(columns,
@@ -430,13 +430,13 @@ def run_optimize_on_optflow(train_table, columns, variables, variable_type,
     else:
         raise ValueError("direction must be maximize or minimize")
 
+    constraint_expressions = []
     if len(variables) == 2:
         obj_expr = generate_optflow_fsl_expr_when_two_vars(
             columns=columns,
             tokens=objective,
             variables=variables,
             result_value_name=result_value_name)
-        constraint_expressions = []
         for c in constraints:
             tokens = c.get("tokens")
             group_by = c.get("group_by")
@@ -457,7 +457,6 @@ def run_optimize_on_optflow(train_table, columns, variables, variable_type,
             variable_str="@X",
             data_str="@input")
 
-        constraint_expressions = []
         for expr, for_range, iter_vars in c_exprs:
             if for_range:
                 c_expr_str = "for %s in %s: %s" % (",".join(iter_vars),

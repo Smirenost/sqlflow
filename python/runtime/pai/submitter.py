@@ -271,7 +271,7 @@ def delete_oss_dir_recursive(bucket, directory):
         for sub_prefix in loc.prefix_list:
             delete_oss_dir_recursive(bucket, sub_prefix)
     # empty list param will raise error
-    if len(object_path_list) > 0:
+    if object_path_list:
         bucket.batch_delete_objects(object_path_list)
 
 
@@ -584,7 +584,7 @@ def create_predict_result_table(datasource, select, result_table, label_column,
     schema = db.get_table_schema(conn, result_table)
     col_type = "INT"
     for (name, ctype) in schema:
-        if name == train_label_column or name == label_column:
+        if name in [train_label_column, label_column]:
             col_type = ctype
             break
     col_names = [col[0] for col in schema]
@@ -843,7 +843,7 @@ def get_evaluate_metrics(model_type, model_attrs):
             if m and m not in metrics
         ]
     # add default if no extra metrics is provided
-    if len(metrics) == 0:
+    if not metrics:
         if model_type == EstimatorType.XGBOOST:
             metrics.append("accuracy_score")
         elif model_type == EstimatorType.TENSORFLOW:

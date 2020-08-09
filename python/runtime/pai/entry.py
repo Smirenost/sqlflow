@@ -56,12 +56,11 @@ def call_fun(func, params):
         return func(**params)
 
     # if func has no dict args, we need to remove non-param entries in params
-    dict_args = dict()
+    dict_args = {}
     for i, name in enumerate(sig[0]):
-        if i < required_len:
-            if name not in params:
-                raise SQLFlowDiagnostic("Non-default param is not passed:%s" %
-                                        name)
+        if i < required_len and name not in params:
+            raise SQLFlowDiagnostic("Non-default param is not passed:%s" %
+                                    name)
         if name in params:
             dict_args[name] = params[name]
     return func(**dict_args)

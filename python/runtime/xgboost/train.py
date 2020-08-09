@@ -172,7 +172,7 @@ def train(datasource,
         if len(validation_select.strip()) > 0:
             watchlist.append((dvalidate, "validate"))
 
-        re = dict()
+        re = {}
         bst = xgb.train(model_params,
                         per_batch_dmatrix,
                         evals=watchlist,
@@ -205,7 +205,7 @@ def save_model_to_local_file(booster, model_params, meta, filename):
         from xgboost.sklearn import XGBLabelEncoder as XGBoostLabelEncoder
 
     objective = model_params.get("objective")
-    bst_meta = dict()
+    bst_meta = {}
 
     if objective.startswith("binary:") or objective.startswith("multi:"):
         if objective.startswith("binary:"):

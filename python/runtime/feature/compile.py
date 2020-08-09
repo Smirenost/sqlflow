@@ -158,7 +158,7 @@ def compile_ir_feature_columns(ir_features, model_type):
     else:
         raise ValueError("only support TensorFlow and XGBoost model")
 
-    all_fcs = dict()
+    all_fcs = {}
     for target, fc_list in ir_features.items():
         fcs = [
             compile_feature_column(fc, model_type, package) for fc in fc_list

@@ -20,7 +20,7 @@ from runtime import db
 
 
 def parse_sparse_feature(features, label, feature_column_names, feature_metas):
-    features_dict = dict()
+    features_dict = {}
     for idx, col in enumerate(features):
         name = feature_column_names[idx]
         if feature_metas[name]["is_sparse"]:
@@ -34,7 +34,7 @@ def parse_sparse_feature(features, label, feature_column_names, feature_metas):
 
 def parse_sparse_feature_predict(features, feature_column_names,
                                  feature_metas):
-    features_dict = dict()
+    features_dict = {}
     for idx, col in enumerate(features):
         name = feature_column_names[idx]
         if feature_metas[name]["is_sparse"]:
@@ -96,7 +96,6 @@ def input_fn(select,
                            feature_metas,
                            slice_id=worker_id,
                            slice_count=num_workers)
-        selected_cols = db.pai_selected_cols(pai_table)
     else:
         conn = db.connect_with_data_source(datasource)
         gen = db.db_generator(conn, select, label_meta)

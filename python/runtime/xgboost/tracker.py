@@ -120,17 +120,17 @@ class SlaveEntry(object):
         for r in nnset:
             self.sock.sendint(r)
         # send prev link
-        if rprev != -1 and rprev != rank:
+        if rprev in [-1, rank]:
+            self.sock.sendint(-1)
+        else:
             nnset.add(rprev)
             self.sock.sendint(rprev)
-        else:
-            self.sock.sendint(-1)
         # send next link
-        if rnext != -1 and rnext != rank:
+        if rnext in [-1, rank]:
+            self.sock.sendint(-1)
+        else:
             nnset.add(rnext)
             self.sock.sendint(rnext)
-        else:
-            self.sock.sendint(-1)
         while True:
             ngood = self.sock.recvint()
             goodset = set([])
@@ -277,10 +277,7 @@ class RabitTracker(object):
         for k, v in tree_map.items():
             tree_map_[rmap[k]] = [rmap[x] for x in v]
         for k, v in parent_map.items():
-            if k != 0:
-                parent_map_[rmap[k]] = rmap[v]
-            else:
-                parent_map_[rmap[k]] = -1
+            parent_map_[rmap[k]] = rmap[v] if k != 0 else -1
         return tree_map_, parent_map_, ring_map_
 
     def accept_slaves(self, nslave):
@@ -308,7 +305,7 @@ class RabitTracker(object):
                 shutdown[s.rank] = s
                 logging.debug('Recieve %s signal from %d', s.cmd, s.rank)
                 continue
-            assert s.cmd == 'start' or s.cmd == 'recover'
+            assert s.cmd in ['start', 'recover']
             # lazily initialize the slaves
             if tree_map is None:
                 assert s.cmd == 'start'
@@ -318,7 +315,7 @@ class RabitTracker(object):
                 # set of nodes that is pending for getting up
                 todo_nodes = list(range(nslave))
             else:
-                assert s.world_size == -1 or s.world_size == nslave
+                assert s.world_size in [-1, nslave]
             if s.cmd == 'recover':
                 assert s.rank >= 0
 

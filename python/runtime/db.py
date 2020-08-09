@@ -458,12 +458,7 @@ def buffered_db_writer(driver,
                        hive_location="",
                        hdfs_user="",
                        hdfs_pass=""):
-    if driver == "maxcompute":
-        w = db_writer.MaxComputeDBWriter(conn, table_name, table_schema,
-                                         buff_size)
-    elif driver == "mysql":
-        w = db_writer.MySQLDBWriter(conn, table_name, table_schema, buff_size)
-    elif driver == "hive":
+    if driver == "hive":
         w = db_writer.HiveDBWriter(conn,
                                    table_name,
                                    table_schema,
@@ -472,6 +467,11 @@ def buffered_db_writer(driver,
                                    hive_location=hive_location,
                                    hdfs_user=hdfs_user,
                                    hdfs_pass=hdfs_pass)
+    elif driver == "maxcompute":
+        w = db_writer.MaxComputeDBWriter(conn, table_name, table_schema,
+                                         buff_size)
+    elif driver == "mysql":
+        w = db_writer.MySQLDBWriter(conn, table_name, table_schema, buff_size)
     elif driver == "pai_maxcompute":
         w = db_writer.PAIMaxComputeDBWriter(table_name, table_schema,
                                             buff_size)
@@ -496,9 +496,8 @@ def get_table_schema(conn, table):
     """
     if conn.driver == "maxcompute":
         schema = conn.get_table(table).schema
-        names_and_types = [(c.name, str(c.type).upper())
+        return [(c.name, str(c.type).upper())
                            for c in schema.columns]
-        return names_and_types
     else:
         statement = "describe %s" % table
         cursor = conn.cursor()

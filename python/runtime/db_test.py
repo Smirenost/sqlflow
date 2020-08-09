@@ -121,17 +121,17 @@ class TestDB(TestCase):
         drop_tbl = '''drop table if exists test_db.tbl'''
         select_tbl = '''select * from test_db.tbl'''
         table_schema = ["label", "features"]
-        values = [(1, '5,6,1,2')] * 10
         execute(driver, conn, create_db)
         execute(driver, conn, drop_tbl)
         execute(driver, conn, create_tbl)
         with buffered_db_writer(driver,
-                                conn,
-                                "test_db.tbl",
-                                table_schema,
-                                buff_size=10,
-                                hdfs_namenode_addr=hdfs_namenode_addr,
-                                hive_location=hive_location) as w:
+                                    conn,
+                                    "test_db.tbl",
+                                    table_schema,
+                                    buff_size=10,
+                                    hdfs_namenode_addr=hdfs_namenode_addr,
+                                    hive_location=hive_location) as w:
+            values = [(1, '5,6,1,2')] * 10
             for row in values:
                 w.write(row)
 
@@ -147,8 +147,6 @@ class TestDB(TestCase):
     def _do_test(self, driver, conn, hdfs_namenode_addr="", hive_location=""):
         table_name = "test_db"
         table_schema = ["label", "features"]
-        values = [(1, '5,6,1,2')] * 10
-
         execute(driver, conn, self.drop_statement)
 
         if driver == "hive":
@@ -156,12 +154,14 @@ class TestDB(TestCase):
         else:
             execute(driver, conn, self.create_statement)
         with buffered_db_writer(driver,
-                                conn,
-                                table_name,
-                                table_schema,
-                                buff_size=10,
-                                hdfs_namenode_addr=hdfs_namenode_addr,
-                                hive_location=hive_location) as w:
+                                    conn,
+                                    table_name,
+                                    table_schema,
+                                    buff_size=10,
+                                    hdfs_namenode_addr=hdfs_namenode_addr,
+                                    hive_location=hive_location) as w:
+            values = [(1, '5,6,1,2')] * 10
+
             for row in values:
                 w.write(row)
 

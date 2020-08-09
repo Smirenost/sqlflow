@@ -258,14 +258,14 @@ def fill_plain_field_desc(cell, field_desc):
 
     if float_value is None:
         field_desc.dtype = DataType.STRING
-        field_desc.shape = [1]
         if field_desc.vocabulary is None:
             field_desc.vocabulary = set()
         # Build vocabulary from the sample data
         field_desc.vocabulary.add(cell)
     else:
         field_desc.dtype = DataType.FLOAT
-        field_desc.shape = [1]
+
+    field_desc.shape = [1]
 
 
 def fill_field_descs(generator, fd_map):
@@ -304,11 +304,7 @@ def fill_field_descs(generator, fd_map):
 
     original_size = {}
     for name, fd in fd_map.items():
-        if fd.shape is None:
-            original_size[name] = 1
-        else:
-            original_size[name] = np.prod(fd.shape)
-
+        original_size[name] = 1 if fd.shape is None else np.prod(fd.shape)
     format = [None] * len(str_column_indices)
     field_descs = [fd_map[names[i]] for i in str_column_indices]
     for row_idx, row_data in enumerate(generator()):

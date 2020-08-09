@@ -55,7 +55,7 @@ def xgb_dataset(datasource,
         os.mkdir(raw_data_dir)
 
     if is_pai:
-        for dmatrix in pai_dataset(
+        yield from pai_dataset(
                 fn,
                 feature_metas,
                 feature_column_names,
@@ -67,8 +67,7 @@ def xgb_dataset(datasource,
                 nworkers,
                 batch_size=batch_size,
                 feature_column_code=feature_column_code,
-                raw_data_dir=raw_data_dir):
-            yield dmatrix
+                raw_data_dir=raw_data_dir)
         return
 
     conn = db.connect_with_data_source(datasource)
@@ -192,30 +191,29 @@ def load_dmatrix(filename):
     See https://github.com/sql-machine-learning/sqlflow/issues/2326
     in detailed.
     '''
-    if xgb.rabit.get_world_size() > 1:
-        # XGBoost DMatrix supports to load data from file path like
-        # "train.txt#train.txt.cache". The actual data path is
-        # "train.txt", while "train.txt.cache" is used as the
-        # external memory cache. But "train.txt#train.txt.cache"
-        # is not a valid file path, and it is not supported by
-        # load_svmlight_file(s). So we remove the suffix "#..."
-        # here before loading the data using load_svmlight_file(s).
-        if '#' in filename:
-            filename = filename[0:filename.index('#')]
-
-        if os.path.isdir(filename):
-            files = [os.path.join(filename, f) for f in os.listdir(filename)]
-            assert len(files) > 0, "No data file found in {}".format(filename)
-
-            ret = load_svmlight_files(files, zero_based=True)
-            X = vstack(ret[0::2])
-            y = np.concatenate(ret[1::2], axis=0)
-            return xgb.DMatrix(X, y)
-        else:
-            ret = load_svmlight_file(filename, zero_based=True)
-            return xgb.DMatrix(ret[0], ret[1])
-    else:
+    if xgb.rabit.get_world_size() <= 1:
         return xgb.DMatrix(filename)
+    # XGBoost DMatrix supports to load data from file path like
+    # "train.txt#train.txt.cache". The actual data path is
+    # "train.txt", while "train.txt.cache" is used as the
+    # external memory cache. But "train.txt#train.txt.cache"
+    # is not a valid file path, and it is not supported by
+    # load_svmlight_file(s). So we remove the suffix "#..."
+    # here before loading the data using load_svmlight_file(s).
+    if '#' in filename:
+        filename = filename[0:filename.index('#')]
+
+    if os.path.isdir(filename):
+        files = [os.path.join(filename, f) for f in os.listdir(filename)]
+        assert len(files) > 0, "No data file found in {}".format(filename)
+
+        ret = load_svmlight_files(files, zero_based=True)
+        X = vstack(ret[0::2])
+        y = np.concatenate(ret[1::2], axis=0)
+        return xgb.DMatrix(X, y)
+    else:
+        ret = load_svmlight_file(filename, zero_based=True)
+        return xgb.DMatrix(ret[0], ret[1])
 
 
 def get_pai_table_slice_count(table, nworkers, batch_size):
